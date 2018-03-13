@@ -65,24 +65,24 @@ class CodeReviewControllerTest < ActionController::TestCase
 
   end
 
-  context "new" do
-    should "create form when get mthod" do
-      @request.session[:user_id] = 1
-      get :new, :id => 1, :action_type => 'diff', :rev => 5
-      assert_response :success
-      assert_template '_new_form'
-    end
+  test "new should render form" do
+    @request.session[:user_id] = 1
+    xhr :get, :new, :id => 1, :action_type => 'diff', :rev => 5
+    assert_response :success
+    assert_template 'new'
+  end
 
-    should "create new review" do
+  context 'create' do
+    should 'create new review' do
       @request.session[:user_id] = 1
-      count = CodeReview.all.length
-      post :new, :id => 1, :review => {:line => 1, :change_id => 1,
-        :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+      assert_difference 'CodeReview.count' do
+        xhr :post, :create, :id => 1, :review => {:line => 1, :change_id => 1,
+          :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+      end
       assert_response :success
-      assert_template '_add_success'
-      assert_equal(count + 1, CodeReview.all.length)
+      assert_template 'create'
 
-      get :new, :id => 1, :action_type => 'diff', :rev => 5
+      xhr :get, :new, :id => 1, :action_type => 'diff', :rev => 5
       assert_response :success
       assert_template '_new_form'
     end
@@ -95,35 +95,35 @@ class CodeReviewControllerTest < ActionController::TestCase
       issue = Issue.generate!(:project => project)
       changeset.issues << issue
       changeset.save
-      count = CodeReview.all.length
-      post :new, :id => 1, :review => {:line => 1, :change_id => 3,
-        :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+      assert_difference 'CodeReview.count' do
+        xhr :post, :create, :id => 1, :review => {:line => 1, :change_id => 3,
+          :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+      end
       assert_response :success
-      assert_template '_add_success'
-      assert_equal(count + 1, CodeReview.all.length)
+      assert_template 'create'
 
-      settings = CodeReviewProjectSetting.all
-      settings.each{|setting|
-        setting.destroy
-      }
-      post :new, :id => 1, :review => {:line => 1, :change_id => 1,
-        :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+      CodeReviewProjectSetting.destroy_all
+      assert_no_difference 'CodeReview.count' do
+        xhr :post, :new, :id => 1, :review => {:line => 1, :change_id => 1,
+          :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+      end
       assert_response 200
     end
 
     should "save safe_attributes" do
-           @request.session[:user_id] = 1
+      @request.session[:user_id] = 1
       project = Project.find(1)
       change = Change.find(3)
       changeset = change.changeset
       issue = Issue.generate!(:project => project)
       changeset.issues << issue
       changeset.save
-      count = CodeReview.all.length
-      post :new, :id => 1, :review => {:line => 10, :change_id => 3,
-        :comment => 'aaa', :subject => 'bbb', :parent_id => 1, :status_id => 1}, :action_type => 'diff'
+      assert_difference 'CodeReview.count' do
+        xhr :post, :create, :id => 1, :review => {:line => 10, :change_id => 3,
+          :comment => 'aaa', :subject => 'bbb', :parent_id => 1, :status_id => 1}, :action_type => 'diff'
+      end
       assert_response :success
-      assert_template '_add_success'
+      assert_template 'create'
 
       review = assigns :review
       assert_equal(1, review.project_id)
@@ -139,12 +139,12 @@ class CodeReviewControllerTest < ActionController::TestCase
       project = Project.find(1)
       issue = Issue.generate!(:project => project)
       attachment = FactoryGirl.create(:attachment, container: issue)
-      count = CodeReview.all.length
-      post :new, :id => 1, :review => {:line => 1, :comment => 'aaa',
+      assert_difference 'CodeReview.count' do
+        xhr :post, :create, :id => 1, :review => {:line => 1, :comment => 'aaa',
         :subject => 'bbb', :attachment_id => attachment.id}, :action_type => 'diff'
+      end
       assert_response :success
-      assert_template '_add_success'
-      assert_equal(count + 1, CodeReview.all.length)
+      assert_template 'create'
     end
   end
 
@@ -186,10 +186,12 @@ class CodeReviewControllerTest < ActionController::TestCase
       @request.session[:user_id] = 1
 
       review = CodeReview.find(9)
-      get :reply, :id => 1, :review_id => 9,
-        :reply => {:comment => 'aaa'}, :issue=> {:lock_version => review.issue.lock_version}
+      assert_difference 'Journal.count' do
+        xhr :post, :reply, :id => 1, :review_id => 9,
+          :reply => {:comment => 'aaa'}, :issue=> {:lock_version => review.issue.lock_version}
+      end
       assert_response :success
-      assert_template '_show'
+      assert_template 'reply'
       assert_nil assigns(:error)
     end
 
@@ -197,20 +199,24 @@ class CodeReviewControllerTest < ActionController::TestCase
       @request.session[:user_id] = 1
 
       review = CodeReview.find(9)
-      get :reply, :id => 1, :review_id => 9,
-        :reply => {:comment => 'aaa'}, :issue=> {:lock_version => review.issue.lock_version + 1}
+      assert_no_difference 'Journal.count' do
+        xhr :post, :reply, :id => 1, :review_id => 9,
+          :reply => {:comment => 'aaa'}, :issue=> {:lock_version => review.issue.lock_version + 1}
+      end
       assert_response :success
-      assert_template '_show'
+      assert_template 'reply'
       assert_not_nil assigns(:error)
     end
   end
 
   def test_reply_lock_error
     @request.session[:user_id] = 1
-    get :reply, :id => 1, :review_id => 9,
-      :reply => {:comment => 'aaa'}, :issue=> {:lock_version => 1}
+    assert_no_difference 'Journal.count' do
+      xhr :post, :reply, :id => 1, :review_id => 9,
+        :reply => {:comment => 'aaa'}, :issue=> {:lock_version => 1}
+    end
     assert_response :success
-    assert_template '_show'
+    assert_template 'reply'
     assert assigns(:error)
   end
 
@@ -246,7 +252,7 @@ class CodeReviewControllerTest < ActionController::TestCase
     review_id = 9
     review = CodeReview.find(review_id)
     assert_equal('Unable to print recipes', review.comment)
-    post :update, :id => 1, :review_id => review_id,
+    xhr :patch, :update, :id => 1, :review_id => review_id,
       :review => {:comment => 'bbb', :lock_version => review.lock_version},
       :issue => {:lock_version => review.issue.lock_version}
     assert_response :success
@@ -259,7 +265,7 @@ class CodeReviewControllerTest < ActionController::TestCase
     review_id = 9
     review = CodeReview.find(review_id)
     assert_equal('Unable to print recipes', review.comment)
-    post :update, :id => 1, :review_id => review_id,
+    xhr :patch, :update, :id => 1, :review_id => review_id,
       :review => {:comment => 'bbb', :lock_version => review.lock_version},
       :issue => {:lock_version => 1}
     assert_response :success
@@ -273,9 +279,8 @@ class CodeReviewControllerTest < ActionController::TestCase
     review_id = 9
     review = CodeReview.find(review_id)
     assert_equal('Unable to print recipes', review.comment)
-    post :update_diff_view, :id => 1, :review_id => review_id, :rev => 1, :path => '/test/some/path/in/the/repo'
+    xhr :get, :update_diff_view, :id => 1, :review_id => review_id, :rev => 1, :path => '/test/some/path/in/the/repo'
     assert_response :success
-    review = CodeReview.find(review_id)
   end
 
   def test_forward_to_revision
@@ -288,22 +293,21 @@ class CodeReviewControllerTest < ActionController::TestCase
     review_id = 9
     review = CodeReview.find(review_id)
     assert_equal('Unable to print recipes', review.comment)
-    post :update_attachment_view, :id => 1, :attachment_id => 1
+    xhr :get, :update_attachment_view, :id => 1, :attachment_id => 1
     assert_response :success
-    review = CodeReview.find(review_id)
   end
 
   def test_preview
     @request.session[:user_id] = 1
     review = {}
     review[:comment] = 'aaa'
-    post :preview, :id => 1, :review => review
+    xhr :get, :preview, :id => 1, :review => review
     assert_response :success
   end
 
   def test_assign
     @request.session[:user_id] = 1
-    post :assign, :id => 1
+    get :assign, :id => 1
     assert_response :redirect
   end
 

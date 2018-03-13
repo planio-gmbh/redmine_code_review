@@ -22,8 +22,11 @@
   <h2>
     <%= l(:label_line_number, :line => @review.line) %>
   </h2>
-  <%= form_for @review,:as => :review,
-    :url => {:controller => 'code_review', :action => 'new', :id=>@project}, :html => {:id => 'review_form'} do |f|  %>
+  <%= form_for @review, as: :review,
+                        url: code_reviews_path(@project),
+                        remote: true,
+                        html: {id: 'review_form'} do |f|  %>
+
     <%= error_messages_for 'review' %>
     <%= error_messages_for 'issue' %>
     <%= error_messages_for 'relation' %>
@@ -104,13 +107,9 @@
       <p><label><b><%= l(:field_status) %>:</b></label> <%= h(@issue.status.name) %></p>
     <% end %>
     <p>
-      <%
-      submit_url = url_for(:controller => 'code_review', :action => 'new', :id=>@project)
-      %>
-      <%= button_tag l(:button_apply), type: 'button', onclick: "$('#review-form').load('#{submit_url}', $('#review_form').serialize2json())" %>
-
-      <input type="button" value="<%= l(:button_cancel) %> " onclick="javascript:hideForm();"/>
-      <%= preview_link({ :controller => 'code_review', :action => 'preview', :id => @project}, 'review_form') %>
+      <%= submit_tag l(:button_apply) %>
+      <%= button_tag l(:button_cancel), onclick: 'hideForm();' %>
+      <%= preview_link preview_code_review_path(@project), 'review_form' %>
     </p>
     <div id="preview" class="wiki"></div>
     <%= wikitoolbar_for 'review_comment' %>

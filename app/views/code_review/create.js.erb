@@ -1,0 +1,7 @@
+<% if @review.persisted? %>
+  hideForm();
+  setShowReviewButton('<%= j code_review_url(@project, @review) %>', <%= @review.line %>, <%= @review.id %>, false, <%= @review.file_count %>);
+<% else %>
+  $('#review-form').html('<%= j render partial: 'new_form' %>');
+<% end %>
+

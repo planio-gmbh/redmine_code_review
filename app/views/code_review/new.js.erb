@@ -1,0 +1,10 @@
+hideForm();
+$('#review-form').html('<%= j render partial: 'new_form' %>');
+window.review_form_dialog = $('#review-form-frame').dialog({
+  show: {effect:'scale', direction: 'both'},
+  width:640,
+  zIndex: topZindex,
+  title: '<%= j l :label_add_review %>'
+});
+window.topZindex += 10;
+

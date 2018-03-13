@@ -56,95 +56,74 @@ class CodeReviewController < ApplicationController
     render :template => 'code_review/index', :layout => !request.xhr?
   end
 
+
   def new
-    begin
-      CodeReview.transaction {
-        @review = CodeReview.new
-        @review.issue = Issue.new
+    new_or_create
 
-        if params[:issue] and params[:issue][:tracker_id]
-          @review.issue.tracker_id = params[:issue][:tracker_id].to_i
-        else
-          @review.issue.tracker_id = @setting.tracker_id
-        end
-        @review.assign_attributes(params[:review])
-        @review.project_id = @project.id
-        @review.issue.project_id = @project.id
-
-        @review.user_id = @user.id
-        @review.updated_by_id = @user.id
-        @review.issue.start_date ||= Date.today if Setting.default_issue_start_date_to_creation_date?
-        @review.action_type = params[:action_type]
-        @review.rev = params[:rev] unless params[:rev].blank?
-        @review.rev_to = params[:rev_to] unless params[:rev_to].blank?
-        @review.file_path = params[:path] unless params[:path].blank?
-        @review.file_count = params[:file_count].to_i unless params[:file_count].blank?
-        @review.attachment_id = params[:attachment_id].to_i unless params[:attachment_id].blank?
-        @issue = @review.issue
-        @review.issue.safe_attributes = params[:issue] unless params[:issue].blank?
-        @review.diff_all = (params[:diff_all] == 'true')
-
-        @parent_candidate = get_parent_candidate(@review.rev) if  @review.rev
-
-        if request.post?
-          @review.issue.save!
-          if @review.changeset
-            @review.changeset.issues.each {|issue|
-              create_relation @review, issue, @setting.issue_relation_type
-            } if @setting.auto_relation?
-          elsif @review.attachment and @review.attachment.container_type == 'Issue'
-            issue = Issue.find_by_id(@review.attachment.container_id)
-            create_relation @review, issue, @setting.issue_relation_type if @setting.auto_relation?
-          end
-          watched_users = []
-          @review.open_assignment_issues(@user.id).each {|issue|
-            unless @review.issue.parent_id == issue.id
-              create_relation @review, issue, IssueRelation::TYPE_RELATES
-            end
-            unless watched_users.include?(issue.author)
-              watcher = Watcher.new
-              watcher.watchable_id = @review.issue.id
-              watcher.watchable_type = 'Issue'
-              watcher.user = issue.author
-              watcher.save!
-              watched_users.push(watcher.user)
-            end
-          }
-          @review.save!
-
-          render :partial => 'add_success', :status => 200
-          return
-        else
-          change_id = params[:change_id].to_i unless params[:change_id].blank?
-          @review.change = Change.find(change_id) if change_id
-          @review.line = params[:line].to_i unless params[:line].blank?
-          if (@review.changeset and @review.changeset.user_id)
-            @review.issue.assigned_to_id = @review.changeset.user_id
-          end
-          @default_version_id = @review.issue.fixed_version.id if @review.issue.fixed_version
-          if @review.changeset and @default_version_id.blank?
-            @review.changeset.issues.each {|issue|
-              if issue.fixed_version
-                @default_version_id = issue.fixed_version.id
-                break;
-              end
-            }
-          end
-          @review.open_assignment_issues(@user.id).each {|issue|
-            if issue.fixed_version
-              @default_version_id = issue.fixed_version.id
-              break;
-            end
-          } unless @default_version_id
-
-
-        end
-        render :partial => 'new_form', :status => 200
-      }
-    rescue ActiveRecord::RecordInvalid => e
-      logger.error e
-      render :partial => 'new_form', :status => 200
+    if params[:change_id].present?
+      @review.change = Change.find(params[:change_id])
     end
+    if params[:line].present?
+      @review.line = params[:line].to_i
+    end
+
+    if (@review.changeset and @review.changeset.user_id)
+      @review.issue.assigned_to_id = @review.changeset.user_id
+    end
+
+    @default_version_id = @review.issue.fixed_version.id if @review.issue.fixed_version
+
+    if @default_version_id.nil? and
+      @review.changeset and
+      issue = @review.changeset.issues.detect{|i| i.fixed_version.present?}
+
+      @default_version_id = issue.fixed_version.id
+    end
+
+    if @default_version_id.nil? and
+      issue = @review.open_assignment_issues(@user.id).detect{|i|
+        i.fixed_version.present?
+      }
+
+      @default_version_id = issue.fixed_version.id
+    end
+  end
+
+
+  def create
+    new_or_create
+
+    CodeReview.transaction do
+
+      @review.issue.save!
+      if @review.changeset
+        @review.changeset.issues.each {|issue|
+          create_relation @review, issue, @setting.issue_relation_type
+        } if @setting.auto_relation?
+      elsif @review.attachment and @review.attachment.container_type == 'Issue'
+        issue = Issue.find_by_id(@review.attachment.container_id)
+        create_relation @review, issue, @setting.issue_relation_type if @setting.auto_relation?
+      end
+      watched_users = []
+      @review.open_assignment_issues(@user.id).each {|issue|
+        unless @review.issue.parent_id == issue.id
+          create_relation @review, issue, IssueRelation::TYPE_RELATES
+        end
+        unless watched_users.include?(issue.author)
+          watcher = Watcher.new
+          watcher.watchable_id = @review.issue.id
+          watcher.watchable_type = 'Issue'
+          watcher.user = issue.author
+          watcher.save!
+          watched_users.push(watcher.user)
+        end
+      }
+      @review.save!
+
+    end
+
+  rescue ActiveRecord::RecordInvalid => e
+    logger.error e
   end
 
   def assign
@@ -178,8 +157,10 @@ class CodeReviewController < ApplicationController
   end
 
   def update_diff_view
-    @show_review_id = params[:review_id].to_i unless params[:review_id].blank?
-    @show_review = CodeReview.find(@show_review_id) if @show_review_id
+    if params[:review_id].present?
+      @show_review_id = params[:review_id].to_i
+      @show_review = CodeReview.find_by_id(@show_review_id)
+    end
     @review = CodeReview.new
     @rev = params[:rev] unless params[:rev].blank?
     @rev_to = params[:rev_to] unless params[:rev_to].blank?
@@ -218,26 +199,21 @@ class CodeReviewController < ApplicationController
       @reviews = CodeReview.where(['rev = ? and issue_id is NOT NULL', @rev]).where(:project_id => @project.id).all
     end
     @review.change_id = @change.id if @change
-
-    #render :partial => 'show_error'
-    #return
-
-
-
-    render :partial => 'update_diff_view'
   end
 
   def update_attachment_view
-    @show_review_id = params[:review_id].to_i unless params[:review_id].blank?
+    if params[:review_id].present?
+      @show_review_id = params[:review_id].to_i
+      @show_review = CodeReview.find_by_id(@show_review_id)
+    end
     @attachment_id = params[:attachment_id].to_i
-    @show_review = CodeReview.find(@show_review_id) if @show_review_id
     @review = CodeReview.new
     @action_type = 'attachment'
     @attachment = Attachment.find(@attachment_id)
 
     @reviews = CodeReview.where(['attachment_id = (?) and issue_id is NOT NULL', @attachment_id]).all
 
-    render :partial => 'update_diff_view'
+    render 'update_diff_view'
   end
 
   # this action does way too many things
@@ -256,7 +232,7 @@ class CodeReviewController < ApplicationController
 
     @repository_id = target.repository_identifier
     if request.xhr? or !params[:update].blank?
-      render :partial => 'show'
+      render 'show'
     elsif target.path
       #@review = @review.root
       path = URI.decode(target.path)
@@ -282,53 +258,46 @@ class CodeReviewController < ApplicationController
   end
 
   def reply
-    begin
-      @review = CodeReview.find(params[:review_id].to_i)
-      @issue = @review.issue
-      @issue.lock_version = params[:issue][:lock_version]
-      comment = params[:reply][:comment]
-      journal = @issue.init_journal(User.current, comment)
-      @review.assign_attributes(params[:review])
-      @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
+    @review = CodeReview.find(params[:review_id].to_i)
+    @issue = @review.issue
+    @issue.lock_version = params[:issue][:lock_version]
+    comment = params[:reply][:comment]
+    journal = @issue.init_journal(User.current, comment)
+    @review.assign_attributes(params[:review])
+    @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
 
-      @issue.save!
-      if !journal.new_record?
-        # Only send notification if something was actually changed
-        flash[:notice] = l(:notice_successful_update)
-      end
-
-      render :partial => 'show'
-    rescue ActiveRecord::StaleObjectError
-      # Optimistic locking exception
-      @error = l(:notice_locking_conflict)
-      render :partial => 'show'
+    @issue.save!
+    if !journal.new_record?
+      # Only send notification if something was actually changed
+      flash[:notice] = l(:notice_successful_update)
     end
+
+  rescue ActiveRecord::StaleObjectError
+    # Optimistic locking exception
+    @error = l(:notice_locking_conflict)
   end
 
   def update
-    begin
-      CodeReview.transaction {
-        @review = CodeReview.find(params[:review_id].to_i)
-        journal = @review.issue.init_journal(User.current, nil)
-        @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
-        @issue = @review.issue
-        @issue.lock_version = params[:issue][:lock_version]
-        @review.assign_attributes(params[:review])
-        @review.updated_by_id = @user.id
-        @review.save!
-        @review.issue.save!
+    @review = CodeReview.find(params[:review_id].to_i)
+    @review.issue.init_journal(User.current, nil)
+    @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
+    @issue = @review.issue
+    @issue.lock_version = params[:issue][:lock_version]
+    @review.lock_version = params[:review][:lock_version]
+    @review.assign_attributes(params[:review])
+    @review.updated_by_id = @user.id
+
+    CodeReview.transaction do
+      if @review.save and @issue.save
         @notice = l(:notice_review_updated)
-        lang = current_language
-        Mailer.deliver_issue_edit(journal) if Setting.notified_events.include?('issue_updated')
-        set_language lang if respond_to? 'set_language'
-      }
-    rescue ActiveRecord::StaleObjectError
-      # Optimistic locking exception
-      @error = l(:notice_locking_conflict)
-    rescue
-      # really?
+        @success = true
+      else
+        raise ActiveRecord::Rollback
+      end
     end
-    render partial: 'show'
+  rescue ActiveRecord::StaleObjectError
+    # Optimistic locking exception
+    @error = l(:notice_locking_conflict)
   end
 
 
@@ -401,5 +370,37 @@ class CodeReviewController < ApplicationController
     relation.issue_from_id = review.issue.id
     relation.issue_to_id = issue.id
     relation.save
+  end
+
+
+  # initializes data used for new and create
+  # TODO make that nicer
+  def new_or_create
+    @review = CodeReview.new
+    @review.issue = Issue.new
+
+    if params[:issue] and params[:issue][:tracker_id]
+      @review.issue.tracker_id = params[:issue][:tracker_id].to_i
+    else
+      @review.issue.tracker_id = @setting.tracker_id
+    end
+    @review.assign_attributes(params[:review])
+    @review.project_id = @project.id
+    @review.issue.project_id = @project.id
+
+    @review.user_id = @user.id
+    @review.updated_by_id = @user.id
+    @review.issue.start_date ||= Date.today if Setting.default_issue_start_date_to_creation_date?
+    @review.action_type = params[:action_type]
+    @review.rev = params[:rev] unless params[:rev].blank?
+    @review.rev_to = params[:rev_to] unless params[:rev_to].blank?
+    @review.file_path = params[:path] unless params[:path].blank?
+    @review.file_count = params[:file_count].to_i unless params[:file_count].blank?
+    @review.attachment_id = params[:attachment_id].to_i unless params[:attachment_id].blank?
+    @issue = @review.issue
+    @review.issue.safe_attributes = params[:issue] unless params[:issue].blank?
+    @review.diff_all = (params[:diff_all] == 'true')
+
+    @parent_candidate = get_parent_candidate(@review.rev) if  @review.rev
   end
 end

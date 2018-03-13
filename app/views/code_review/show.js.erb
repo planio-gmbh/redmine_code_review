@@ -1,0 +1,8 @@
+$('#show_review_<%= @review.id %>').html('<%= j render partial: 'show' %>');
+$('#show_review_<%= @review.id %>').dialog({
+  show: {effect:'scale'},
+  width:640,
+  zIndex: window.topZindex,
+  title: '<%= j l :code_review %>'
+});
+window.topZindex++;

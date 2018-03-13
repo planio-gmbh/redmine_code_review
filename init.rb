@@ -50,7 +50,7 @@ Redmine::Plugin.register :redmine_code_review do
 
   project_module :code_review do
     permission :view_code_review, {:code_review => [:update_diff_view, :update_attachment_view, :update_revisions_view, :index, :show]}, {:read => true}
-    permission :add_code_review, {:code_review => [:new, :reply, :forward_to_revision, :preview]}, :require => :member
+    permission :add_code_review, {:code_review => [:new, :create, :reply, :forward_to_revision, :preview]}, :require => :member
     permission :edit_code_review, {:code_review => [:update]}, :require => :member
     permission :delete_code_review, {:code_review => [:destroy]}, :require => :member
     permission :assign_code_review, {:code_review => [:assign]}, :require => :member

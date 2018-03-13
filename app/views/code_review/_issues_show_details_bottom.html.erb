@@ -41,8 +41,7 @@ review = issue.code_review
           :controller => 'code_review', :action => 'show', :id => project, :assignment_id => assignment.id, :repository_id => repository_id) %>
       <% elsif assignment.revision %>
         <%
-        repo = project unless repository_id
-        repo ||= assignment.repository
+        repo = assignment.repository || project.repository
       %>
         <%= l(:label_revision) + " "%>
       <%=  link_to_revision(assignment.revision, repo) %>

@@ -21,6 +21,7 @@
   <div class="code_review_body">
 
     <!-- flash -->
+    <%= error_messages_for 'issue' -%>
     <%= error_messages_for 'review' -%>
     <%= error_messages_for 'reply' -%>
     <% if @notice -%>
@@ -35,17 +36,14 @@
 
       <!-- toolbar -->
       <div class="contextual">
-        <% if authorize_for('code_review', 'update') -%>
-          <%= link_to_function  l(:button_update), "$('#update-form-#{@review.id}').show();return false;", :class => 'icon icon-edit' %>
+        <% if authorize_for('code_review', 'update') %>
+          <%= link_to l(:button_update), '#', onclick: "$('#update-form-#{@review.id}').show();return false;", class: 'icon icon-edit' %>
         <% end %>
-        <% if authorize_for('code_review', 'destroy') -%>
+        <% if authorize_for('code_review', 'destroy') %>
           <%= link_to(l(:button_delete),
-            {:controller => 'code_review',
-              :action => 'destroy',
-              :id => @project,
-              :review_id => @review },
-            method: :delete,
-            :data => {:confirm => l(:text_are_you_sure), remote: true},
+                      code_review_path(@project, @review),
+                      method: :delete,
+                      data: {confirm: l(:text_are_you_sure), remote: true},
             :class => 'icon icon-del', :id => 'delete-review-link') %>
         <% end -%>
       </div>
@@ -73,17 +71,12 @@
       </div>
 
       <!-- review comment edit form -->
-      <div class="box" id="update-form-<%= @review.id %>" style="display:none;">
+      <div class="box update-form" id="update-form-<%= @review.id %>" style="display:none;">
         <%
         review_form_id = "review_form_#{@review.id}"
         -%>
-        <%= form_for :review,
-          :url => {:controller => 'code_review',
-          :action => 'update',
-          :id => @project},
-          :remote => true,
-          :authenticity_token => true,
-          :html => {:id => review_form_id} do |f|  %>
+        <%= form_for :review, url: code_review_path(@project, @review),
+          remote: true, method: :patch, html: {id: review_form_id} do |f|  %>
           <%= f.hidden_field :lock_version %>
           <%= hidden_field :issue, :lock_version%>
           <%= hidden_field_tag :review_id, @review.id %>
@@ -106,15 +99,12 @@
               :id => 'review_comment_' + @review.id.to_s %>
           </p>
           <p>
-            <%
-            submit_url = url_for(:controller => 'code_review', :action => 'update', :id => @project)
-            -%>
-            <%= button_tag l(:button_apply), type: 'button', onclick: "$('#show_review_#{@review.id}').load('#{submit_url}', $('##{review_form_id}').serialize())" %>
-            <input type="button" value="<%= l(:button_cancel) %>" onclick='$("#review_form_<%= @review.id %>").hide();' />
-            <%= link_to_function l(:label_preview), "$('#preview_#{@review.id}').load('#{url_for(:controller => 'code_review', :action => 'preview', :id => @project)}', $('##{review_form_id}').serialize())" %>
+            <%= submit_tag l(:button_apply) %>
+            <%= button_tag l(:button_cancel), onclick: "$(this).closest('div.box.update-form').hide(); return false;" %>
+            <%= link_to l(:label_preview), '#', onclick: "$('#preview_#{@review.id}').load('#{preview_code_review_path(@project)}', $('##{review_form_id}').serialize()); return false;" %>
           </p>
           <div id="preview_<%= @review.id%>" class="wiki"></div>
-          <%= wikitoolbar_for 'review_comment_' + @review.id.to_s %>
+          <%= wikitoolbar_for "review_comment_#{@review.id}" %>
         <% end %>
       </div>
     </div>
@@ -154,10 +144,7 @@
               :id => 'reply_comment_' + @review.id.to_s %>
           </p>
           <p>
-            <%
-            submit_url = url_for(:controller => 'code_review', :action => 'reply', :id => @project)
-            -%>
-            <%= button_tag l(:button_apply), type: 'button', onclick: "$('#show_review_#{@review.id}').load('#{submit_url}', $('##{message_form_id}').serialize())" %>
+          <%= button_tag l(:button_apply), type: 'button', onclick: "$.post('#{reply_code_review_path(@project, @review)}', $('##{message_form_id}').serialize())" %>
             <%
             reply_preview_id = "reply_preview_#{@review.id}"
             -%>
