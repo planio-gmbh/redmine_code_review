@@ -172,14 +172,13 @@ class CodeReviewControllerTest < ActionController::TestCase
 
   def test_destroy
     project = Project.find(1)
-    issue = Issue.generate!(:project => project)
+    Issue.generate!(:project => project)
     review = FactoryGirl.create(:code_review, project: project)
-    count = CodeReview.all.length
     @request.session[:user_id] = 1
-    get :destroy, :id => 1, :review_id => review.id
-    assert_response :success
-    assert_equal(count - 1, CodeReview.all.length)
-
+    assert_difference 'CodeReview.count', -1 do
+      xhr :delete, :destroy, id: 1, review_id: review.id
+      assert_response :success
+    end
   end
 
   context "reply" do

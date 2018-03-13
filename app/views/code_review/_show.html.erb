@@ -43,17 +43,11 @@
             {:controller => 'code_review',
               :action => 'destroy',
               :id => @project,
-              :review_id => @review},
-            :update => "show_review_#{@review.id}",
-            :remote => true,
-            :data => {:confirm => l(:text_are_you_sure)},
+              :review_id => @review },
+            method: :delete,
+            :data => {:confirm => l(:text_are_you_sure), remote: true},
             :class => 'icon icon-del', :id => 'delete-review-link') %>
         <% end -%>
-        <script>
-          $('#delete-review-link').bind('ajax:complete', function() {
-            location.reload();
-          });
-        </script>
       </div>
 
       <!-- title -->
