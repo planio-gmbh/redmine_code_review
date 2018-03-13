@@ -1,11 +1,21 @@
-{<img src="https://travis-ci.org/haru/redmine_code_review.svg?branch=master" alt="Build Status" />}[https://travis-ci.org/haru/redmine_code_review]
-{<img src="https://coveralls.io/repos/github/haru/redmine_code_review/badge.svg?branch=master" alt="Coverage Status" />}[https://coveralls.io/github/haru/redmine_code_review?branch=master]
+{<img src="https://travis-ci.org/planio-gmbh/redmine_code_review.svg?branch=planio/3.3" alt="Build Status" />}[https://travis-ci.org/planio-gmbh/redmine_code_review]
 
 = Redmine Code Review Plugin
 
-This is a plugin for Redmine which lets you annotate source code within the repository browser.
+This is a plugin for Redmine which lets you annotate source code within the
+repository browser, and text files in the attachment preview.
 
 http://www.r-labs.org/wiki/r-labs/Code_Review
+
+== About this fork
+
+This fork has been created by {Planio}[https://plan.io]. It contains various
+bug fixes and refactorings, mostly security / readability and coding style
+related. Use the branch corresponding to your Redmine version, i.e. planio/3.3
+on Redmine 3.3. Old branches are not generally maintained, upgrade your Redmine
+regularly or monitor more recent branches for commits worth backporting.
+
+The planio/3.3 branch should run on Redmine 3.4 as well.
 
 === Plugin installation
 
