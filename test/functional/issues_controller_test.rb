@@ -42,7 +42,8 @@ class IssuesControllerTest < ActionController::TestCase
            :time_entries,
            :journals,
            :journal_details,
-           :code_reviews
+           :code_reviews,
+           :repositories
   
   def setup
     @controller = IssuesController.new
