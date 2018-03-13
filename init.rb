@@ -44,8 +44,9 @@ Redmine::Plugin.register :redmine_code_review do
   author 'Haruyuki Iida'
   author_url 'http://twitter.com/haru_iida'
   url "http://www.r-labs.org/projects/show/codereview" if respond_to?(:url)
+  hidden true if respond_to?(:hidden)
   description 'This is a Code Review plugin for Redmine'
-  version '0.9.0'
+  version '0.9.0-planio'
   requires_redmine :version_or_higher => '3.3.0'
 
   project_module :code_review do
