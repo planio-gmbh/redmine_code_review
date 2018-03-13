@@ -17,14 +17,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 -%>
 
-<div class="code_review">
-
-</div>
+<div class="code_review"></div>
 
 <div id="review-form-frame">
-  <div id="review-form">
-
-  </div>
+  <div id="review-form"></div>
 </div>
 
 <div id="code-review-assign-form" />
@@ -50,7 +46,7 @@
   var review_dialog_title = "<%= l(:code_review) %>";
   var addReviewUrl = '<%= j url_for :controller => 'code_review', :action => 'new', :id => @project %>';
   var is_readonly = <%= !authorize_for('code_review', 'new') %>;
-  var is_diff = <%= @action_type == 'diff' or (@attachment and @attachment.is_diff?) %>;
+  var is_diff = <%= !!(@action_type == 'diff' or (@attachment and @attachment.is_diff?)) %>;
   var action_type = '<%= j @action_type %>';
   var rev = '<%= j @rev %>';
   var rev_to = '<%= j @rev_to %>';
