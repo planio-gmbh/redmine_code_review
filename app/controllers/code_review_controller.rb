@@ -240,15 +240,20 @@ class CodeReviewController < ApplicationController
     render :partial => 'update_diff_view'
   end
 
+  # this action does way too many things
   def show
     @review = CodeReview.find(params[:review_id].to_i) unless params[:review_id].blank?
-    @repository = @review.repository if @review
     @assignment = CodeReviewAssignment.find(params[:assignment_id].to_i) unless params[:assignment_id].blank?
-    @repository_id = @assignment.repository_identifier if @assignment
-    @issue = @review.issue if @review
-    @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current) if @review
-    target = @review if @review
+
+    if @review
+      @repository = @review.repository
+      @issue = @review.issue
+      @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
+      target = @review
+    end
+
     target = @assignment if @assignment
+
     @repository_id = target.repository_identifier
     if request.xhr? or !params[:update].blank?
       render :partial => 'show'

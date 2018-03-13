@@ -166,4 +166,10 @@ class CodeReview < ActiveRecord::Base
       user_id == issue.assigned_to_id
     }
   end
+
+  def journals
+    issue.journals.includes(:user, :details).
+      references(:user, :details).
+      reorder(:created_on, :id).to_a if issue
+  end
 end

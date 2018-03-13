@@ -17,7 +17,7 @@
       rev: '<%= j rev %>',
       path:'<%= j path %>',
       review_id: '<%= j review_id %>',
-      action_type:'<%= j action_name %>',
+      action_type:'<%= j params[:action] %>',
       rev_to: '<%= j rev_to %>'});
   });
 <% end %>

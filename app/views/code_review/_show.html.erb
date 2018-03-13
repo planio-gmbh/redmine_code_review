@@ -126,21 +126,9 @@
     </div>
 
     <!-- review replies -->
-    <% journals = @review.issue.journals.sort {|a, b| a.id <=> b.id } %>
-    <% if respond_to?('render_journal') %>
-      <% # ChiliProject -%>
-      <% if journals.length > 0 %>
-        <div id="history">
-          <h3 class="rounded-background"><%= l(:label_history) %></h3>
-          <%= render :partial => 'history', :locals => { :issue => @review.issue, :journals => journals } %>
-        </div>
-      <% end %>
-    <% else %>
-      <% # Redmine -%>
-      <% if journals.length > 0 %>
-        <h3><%= l(:label_history) %></h3>
-      <% end %>
-      <%= render :partial => 'reply', :collection => journals %>
+    <% if (journals = @review.journals).present? %>
+      <h3><%= l(:label_history) %></h3>
+      <%= render partial: 'reply', collection: journals %>
     <% end %>
 
     <!-- reply form -->

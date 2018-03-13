@@ -16,22 +16,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 -%>
+<% if @changesets %>
+
 <%
-
-if @changesets
   changeset_ids = safe_join @changesets.map(&:revision), ','
-
-  repository_id = @repository.identifier_param
-  url = url_for :controller => 'code_review', :action => 'update_revisions_view', :id => project, :repository_id => repository_id
+  url = url_for controller: 'code_review', action: 'update_revisions_view',
+                id: project, repository_id: @repository.identifier_param
 %>
 
   <div id="code_review_revisions"></div>
 
-
-  <script type="text/javascript">
+  <%= javascript_tag do %>
     $(document).ready(function(){
-      $('#code_review_revisions').load('<%=url%>', {changeset_ids: '<%= j changeset_ids%>'});
+      $('#code_review_revisions').load(
+        '<%= j url %>',
+        { changeset_ids: '<%= j changeset_ids %>'}
+      );
     });
-  </script>
+  <% end %>
 
 <% end %>
