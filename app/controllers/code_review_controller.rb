@@ -338,7 +338,11 @@ class CodeReviewController < ApplicationController
     else
       @repository = @project.repository
     end
-    @repository_id = @repository.identifier_param
+    if @repository
+      @repository_id = @repository.identifier_param
+    else
+      render_404
+    end
   end
 
   def find_project
