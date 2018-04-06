@@ -34,13 +34,20 @@ class CodeReviewAssignment < ActiveRecord::Base
     return rev if rev
     changeset.revision if changeset
   end
-  
+
   def repository
     @repository ||= change.changeset.repository if change
     @repository ||= changeset.repository if changeset
     @repository
   end
-  
+
+  # project the linked attachment or repository belong to
+  # this can be different from issue.project because issues can be moved to
+  # another project.
+  def project
+    repository.try(:project) || attachment.try(:project)
+  end
+
   def repository_identifier
     return nil unless repository
     @repository_identifier ||= repository.identifier_param
@@ -65,7 +72,7 @@ class CodeReviewAssignment < ActiveRecord::Base
     issue.description = issue.description.sub("$COMMENTS" , changeset.comments) unless changeset.comments.blank?
 
     issue.save!
-      
+
     assignment.issue_id = issue.id
     assignment.changeset_id = changeset.id
     assignment.save!

@@ -1,30 +1,17 @@
-<%
-unless User.current.allowed_to?({:controller => 'code_review', :action => 'show'}, project)
-  return 
-end
-
-%>
-
-<% if issue.code_review %>
-<%
-review = issue.code_review
-%>
+<% if review and review.project and User.current.allowed_to(:view_code_review, review.project) %>
   <tr>
     <td><b><%= l(:code_review) %>:</b></td>
     <td colspan="3">
       <%
       label = URI.decode("#{review.repository_identifier + ':' if review.repository_identifier}#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}")
       -%>
-      <%= link_to(label,
-        :controller => 'code_review', :action => 'show', :id => project, :review_id => review.id, :repository_id => review.repository_identifier) %>
+      <%= link_to label, controller: 'code_review', action: 'show', id: review.project, review_id: review.id, repository_id: review.repository_identifier %>
     </td>
   </tr>
 <% end %>
-<% if issue.code_review_assignment %>
-  <%    
-  assignment = issue.code_review_assignment
-  repository_id = assignment.repository_identifier
-%>
+
+<% if assignment and assignment.project and User.current.allowed_to(:view_code_review, assignment.project) %>
+  <% repository_id = assignment.repository_identifier %>
   <tr>
     <td><b><%= l(:review_assigned_for) %>:</b></td>
     <td colspan="3">
@@ -32,11 +19,10 @@ review = issue.code_review
         <%
         label = URI.decode("#{repository_id + ':' if repository_id}#{assignment.path}#{'@' + assignment.revision if assignment.revision}")
         -%>
-        <%= link_to(label,
-          :controller => 'code_review', :action => 'show', :id => project, :assignment_id => assignment.id, :repository_id => repository_id) %>
+        <%= link_to label, controller: 'code_review', action: 'show', id: assignment.project, assignment_id: assignment.id, repository_id: repository_id %>
       <% elsif assignment.revision %>
         <%
-        repo = assignment.repository || project.repository
+        repo = assignment.repository || (assignment.project || project).repository
       %>
         <%= l(:label_revision) + " "%>
       <%=  link_to_revision(assignment.revision, repo) %>

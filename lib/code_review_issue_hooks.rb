@@ -17,32 +17,30 @@
 
 class CodeReviewIssueHooks < Redmine::Hook::ViewListener
   include RepositoriesHelper
-  render_on :view_issues_show_details_bottom, :partial => 'code_review/issues_show_details_bottom'
-  def view_issues_show_details_bottom_org(context = { })
+
+  def view_issues_show_details_bottom(context = {})
     project = context[:project]
-    return '' unless project
-    unless User.current.allowed_to?({:controller => 'code_review', :action => 'show'}, project)
-      return ''
-    end
-    controller = context[:controller]
-    return '' unless controller
-    request = context[:request]
     issue = context[:issue]
 
-    o = ''
-    o << create_review_info(project, issue.code_review) if issue.code_review
-    o << create_assignment_info(project, issue.code_review_assignment) if issue.code_review_assignment
+    if project and User.current.allowed_to?(:view_code_review, project)
 
-    return o
+      context[:hook_caller].send(
+        :render,
+        partial: 'code_review/issues_show_details_bottom',
+        locals: {
+          project: project, issue: issue,
+          review: issue.code_review,
+          assignment: issue.code_review_assignment
+        }
+      )
+    end
   end
 
   def view_issues_form_details_bottom(context = { })
-    project = context[:project]
     request = context[:request]
     parameters = request.parameters
     code = parameters[:code]
     return unless code
-    issue = context[:issue]
     o = ''
     o << hidden_field_tag("code[rev]", code[:rev]) unless code[:rev].blank?
     o << "\n"
@@ -61,10 +59,9 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
 
     return o
   end
-  
+
   def controller_issues_new_after_save(context = { })
     if context[:request] && context[:project] && context[:issue]
-      project = context[:project]
       request = context[:request]
       parameters = request.parameters
       code = parameters[:code]
