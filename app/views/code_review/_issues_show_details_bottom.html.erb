@@ -1,8 +1,3 @@
-<%#
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
-%>
-
 <%
 unless User.current.allowed_to?({:controller => 'code_review', :action => 'show'}, project)
   return 
