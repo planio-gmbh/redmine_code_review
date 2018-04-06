@@ -1,4 +1,4 @@
-<% if review and review.project and User.current.allowed_to(:view_code_review, review.project) %>
+<% if review and review.project and User.current.allowed_to?(:view_code_review, review.project) %>
   <tr>
     <td><b><%= l(:code_review) %>:</b></td>
     <td colspan="3">
@@ -10,7 +10,7 @@
   </tr>
 <% end %>
 
-<% if assignment and assignment.project and User.current.allowed_to(:view_code_review, assignment.project) %>
+<% if assignment and assignment.project and User.current.allowed_to?(:view_code_review, assignment.project) %>
   <% repository_id = assignment.repository_identifier %>
   <tr>
     <td><b><%= l(:review_assigned_for) %>:</b></td>
