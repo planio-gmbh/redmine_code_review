@@ -16,6 +16,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class CodeReviewController < ApplicationController
+  include RedmineCodeReview::RedirectToReview
+
   before_filter :find_project, :authorize, :find_user, :find_setting, :find_repository
 
   helper :sort
@@ -126,36 +128,6 @@ class CodeReviewController < ApplicationController
     logger.error e
   end
 
-  def assign
-    code = {}
-    code[:action_type] = params[:action_type] unless params[:action_type].blank?
-    code[:rev] = params[:rev] unless params[:rev].blank?
-    code[:rev_to] = params[:rev_to] unless params[:rev_to].blank?
-    code[:path] = params[:path] unless params[:path].blank?
-    code[:change_id] = params[:change_id].to_i unless params[:change_id].blank?
-    code[:changeset_id] = params[:changeset_id].to_i unless params[:changeset_id].blank?
-    code[:attachment_id] = params[:attachment_id].to_i unless params[:attachment_id].blank?
-    code[:repository_id] = @repository_id if @repository_id
-
-    changeset = Changeset.find(code[:changeset_id]) if code[:changeset_id]
-    if (changeset == nil and code[:change_id] != nil)
-      change = Change.find(code[:change_id])
-      changeset = change.changeset if change
-    end
-    attachment = Attachment.find(code[:attachment_id]) if code[:attachment_id]
-
-    issue = {}
-    issue[:subject] = l(:code_review_requrest)
-    issue[:subject] << " [#{changeset.text_tag}: #{changeset.short_comments}]" if changeset
-    unless changeset
-      issue[:subject] << " [#{attachment.filename}]" if attachment
-    end
-    issue[:tracker_id] = @setting.assignment_tracker_id if @setting.assignment_tracker_id
-
-    redirect_to :controller => 'issues', :action => "new" , :project_id => @project,
-      :issue => issue, :code => code
-  end
-
   def update_diff_view
     if params[:review_id].present?
       @show_review_id = params[:review_id].to_i
@@ -204,56 +176,29 @@ class CodeReviewController < ApplicationController
   def update_attachment_view
     if params[:review_id].present?
       @show_review_id = params[:review_id].to_i
+      # FIXME access control?
       @show_review = CodeReview.find_by_id(@show_review_id)
     end
-    @attachment_id = params[:attachment_id].to_i
+    @attachment = Attachment.find(params[:attachment_id])
+    @attachment_id = @attachment.id
     @review = CodeReview.new
     @action_type = 'attachment'
-    @attachment = Attachment.find(@attachment_id)
 
     @reviews = CodeReview.where(['attachment_id = (?) and issue_id is NOT NULL', @attachment_id]).all
 
     render 'update_diff_view'
   end
 
-  # this action does way too many things
   def show
-    @review = CodeReview.find(params[:review_id].to_i) unless params[:review_id].blank?
-    @assignment = CodeReviewAssignment.find(params[:assignment_id].to_i) unless params[:assignment_id].blank?
+    @review = CodeReview.find params[:review_id]
 
-    if @review
-      @repository = @review.repository
-      @issue = @review.issue
-      @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
-      target = @review
-    end
+    @repository = @review.repository
+    @issue = @review.issue
+    @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
+    @repository_id = @review.repository_identifier
 
-    target = @assignment if @assignment
-
-    @repository_id = target.repository_identifier
-    if request.xhr? or !params[:update].blank?
-      render 'show'
-    elsif target.path
-      #@review = @review.root
-      path = URI.decode(target.path)
-      #path = '/' + path unless path.match(/^\//)
-      action_name = target.action_type
-      rev_to = ''
-      rev_to = '&rev_to=' + target.rev_to if target.rev_to
-      if action_name == 'attachment'
-        attachment = target.attachment
-        url = url_for(:controller => 'attachments', :action => 'show', :id => attachment.id) + '/' + URI.escape(attachment.filename)
-        url << '?review_id=' + @review.id.to_s if @review
-        redirect_to(url)
-      else
-        path = nil if target.diff_all
-        url = url_for(:controller => 'repositories', :action => action_name, :id => @project,
-          :repository_id => @repository_id, :rev => target.revision, :path => path)
-        #url = url_for(:controller => 'repositories', :action => action_name, :id => @project, :repository_id => @repository_id) + path + '?rev=' + target.revision
-        url << '?review_id=' + @review.id.to_s + rev_to if @review
-        url << '?r=' + rev_to unless @review
-        redirect_to url
-      end
+    if !request.xhr? and params[:update].blank? and @review.path.present?
+      redirect_to_review @review
     end
   end
 
@@ -332,6 +277,7 @@ class CodeReviewController < ApplicationController
   end
 
   private
+
   def find_repository
     if params[:repository_id].present?
       @repository = @project.repositories.find_by_identifier_param(params[:repository_id])

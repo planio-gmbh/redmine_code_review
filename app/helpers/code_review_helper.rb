@@ -15,21 +15,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 module CodeReviewHelper
-  def show_assignments(assignments, project, options = {})
 
+  def show_assignments(assignments, project, options = {})
     links = if assignments
       assignments.map do |assignment|
-        issue = assignment.issue
-        link_to("##{issue.id} ", {:controller => 'issues', :action => 'show', :id => issue.id},
-          :class => issue.css_classes, :title => "#{issue}(#{issue.status})")
+        link_to_issue assignment.issue, subject: false, tracker: false
       end
     else
       []
     end
 
     links << link_to(
-      l(:button_add),
-      options.merge(controller: 'code_review', action: 'assign', id: project),
+      l(:button_add), new_code_review_assignment_path(project, options),
       class: 'icon icon-add'
     )
 
@@ -58,10 +55,10 @@ module CodeReviewHelper
         l(:lable_no_code_reviews)
       end + ':'.html_safe +
       content_tag(:span, style: "white-space: nowrap") do
-        link_to(l(:label_assign_review), {:controller => 'code_review',
-          :action => 'assign', :id=>@project,
-          :rev => changeset.revision,
-          :changeset_id => changeset.id})
+        link_to(l(:label_assign_review),
+                new_code_review_assignment_path(@project,
+                                                rev: changeset.revision,
+                                                changeset_id: changeset.id))
       end
     end
 

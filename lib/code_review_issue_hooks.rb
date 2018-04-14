@@ -36,28 +36,15 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
     end
   end
 
-  def view_issues_form_details_bottom(context = { })
-    request = context[:request]
-    parameters = request.parameters
-    code = parameters[:code]
-    return unless code
-    o = ''
-    o << hidden_field_tag("code[rev]", code[:rev]) unless code[:rev].blank?
-    o << "\n"
-    o << hidden_field_tag("code[rev_to]", code[:rev_to]) unless code[:rev_to].blank?
-    o << "\n"
-    o << hidden_field_tag("code[path]", code[:path]) unless code[:path].blank?
-    o << "\n"
-    o << hidden_field_tag("code[action_type]", code[:action_type]) unless code[:action_type].blank?
-    o << "\n"
-    o << hidden_field_tag("code[change_id]", code[:change_id].to_i) unless code[:change_id].blank?
-    o << "\n"
-    o << hidden_field_tag("code[changeset_id]", code[:changeset_id].to_i) unless code[:changeset_id].blank?
-    o << "\n"
-    o << hidden_field_tag("code[attachment_id]", code[:attachment_id].to_i) unless code[:attachment_id].blank?
-
-
-    return o
+  def view_issues_form_details_bottom(context)
+    if code = context[:request].parameters[:code]
+      fields = %i(rev rev_to path action_type change_id changeset_id attachment_id repository_id).map do |field|
+        if value = code[field].presence
+          hidden_field_tag "code[#{field}]", value
+        end
+      end.compact
+      safe_join fields, "\n".html_safe
+    end
   end
 
   def controller_issues_new_after_save(context = { })
@@ -83,6 +70,7 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
   end
 
   private
+  # FIXME dead code?
   def create_review_info(project, review)
     o = '<tr>'
     o << "<td><b>#{l(:code_review)}:</b></td>"
@@ -94,6 +82,7 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
     return o
   end
 
+  # FIXME dead code?
   def create_assignment_info(project, assignment)
     repository_id = assignment.repository_identifier
     o = '<tr>'
@@ -101,7 +90,7 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
     o << '<td colspan="3">'
     if assignment.path
       o << link_to("#{repository_id + ':' if repository_id}#{assignment.path}#{'@' + assignment.revision if assignment.revision}",
-        :controller => 'code_review', :action => 'show', :id => project, :assignment_id => assignment.id, :repository_id => repository_id)
+                   code_review_assignment_path(project, assignment, repository_id: repository_id))
     elsif assignment.revision
       repo = project unless repository_id
       repo ||= assignment.repository

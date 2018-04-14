@@ -16,6 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 RedmineApp::Application.routes.draw do
+
+  scope 'projects/:project_id' do
+    resources :code_review_assignments
+  end
+
   scope 'projects/:id' do
 
     # the goal
@@ -36,14 +41,6 @@ RedmineApp::Application.routes.draw do
       to: 'code_review#preview',
       via: [:get, :post],
       as: :preview_code_review
-
-
-    # code_review_assignments should be a separate resource
-    # resources :code_review_assignments
-    get 'code_review_assignments/new',
-      to: 'code_review#assign',
-      as: :new_code_review_assignment
-    get    'code_review_assignments/:assignment_id', to: 'code_review#show',   as: :code_review_assignment
 
 
     # not sure where this belongs

@@ -162,12 +162,6 @@ class CodeReviewControllerTest < ActionController::TestCase
       assert_response 302
       #assert_template '_show'
     end
-    should "be success with assignment_id" do
-      @request.session[:user_id] = 1
-      get :show, :id => 1, :assignment_id => 1
-      assert_response 302
-      #assert_template '_show'
-    end
   end
 
   def test_destroy
@@ -303,12 +297,6 @@ class CodeReviewControllerTest < ActionController::TestCase
     review[:comment] = 'aaa'
     xhr :get, :preview, :id => 1, :review => review
     assert_response :success
-  end
-
-  def test_assign
-    @request.session[:user_id] = 1
-    get :assign, :id => 1
-    assert_response :redirect
   end
 
   context "update_revisions_view" do

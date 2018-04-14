@@ -19,7 +19,7 @@
         <%
         label = URI.decode("#{repository_id + ':' if repository_id}#{assignment.path}#{'@' + assignment.revision if assignment.revision}")
         -%>
-        <%= link_to label, controller: 'code_review', action: 'show', id: assignment.project, assignment_id: assignment.id, repository_id: repository_id %>
+        <%= link_to label, code_review_assignment_path(assignment.project, assignment, repository_id: repository_id) %>
       <% elsif assignment.revision %>
         <%
         repo = assignment.repository || (assignment.project || project).repository
@@ -27,7 +27,7 @@
         <%= l(:label_revision) + " "%>
       <%=  link_to_revision(assignment.revision, repo) %>
       <% elsif assignment.attachment %>
-        <%= link_to(assignment.attachment.filename, :controller => 'attachments', :action => 'show', :id => assignment.attachment.id) %>
+        <%= link_to assignment.attachment.filename, attachment_path(assignment.attachment) %>
       <% end %>
     </td>
   </tr>

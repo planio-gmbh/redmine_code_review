@@ -29,8 +29,7 @@
     <div id="code_review_assignments">
       <%= l :review_assignments %>:
       <%= show_assignments @changeset.code_review_assignments, @project,
-      { rev: @changeset.revision, changeset_id: @changeset.id,
-        repository_id: repository_id } %>
+      { changeset_id: @changeset.id, action_type: params[:action] } %>
     </div>
   <% end %>
 
