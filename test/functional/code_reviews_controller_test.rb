@@ -64,77 +64,78 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
     assert_template 'new'
   end
 
-  context 'create' do
-    should 'create new review' do
-      assert_difference 'CodeReview.count' do
-        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :change_id => 1,
-          :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
-      end
-      assert_response :success
-      assert_template 'create'
-
-      xhr :get, :new, project_id: 'ecookbook', :action_type => 'diff', :rev => 5
-      assert_response :success
-      assert_template '_new_form'
+  test "should create new review" do
+    assert_difference 'CodeReview.count' do
+      xhr :post, :create, project_id: 'ecookbook', :review => {
+        :line => 1, :change_id => 1, :comment => 'aaa', :subject => 'bbb'
+      }, :action_type => 'diff'
     end
+    assert_response :success
+    assert_template 'create'
 
-    should "create new review when changeset has related issue" do
-      project = Project.find(1)
-      change = Change.find(3)
-      changeset = change.changeset
-      issue = Issue.generate!(:project => project)
-      changeset.issues << issue
-      changeset.save
-      assert_difference 'CodeReview.count' do
-        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :change_id => 3,
-          :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
-      end
-      assert_response :success
-      assert_template 'create'
-
-      CodeReviewProjectSetting.destroy_all
-      assert_no_difference 'CodeReview.count' do
-        xhr :post, :new, project_id: 'ecookbook', :review => {:line => 1, :change_id => 1,
-          :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
-      end
-      assert_response 200
-    end
-
-    should "save safe_attributes" do
-      project = Project.find(1)
-      change = Change.find(3)
-      changeset = change.changeset
-      issue = Issue.generate!(:project => project)
-      changeset.issues << issue
-      changeset.save
-      assert_difference 'CodeReview.count' do
-        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 10, :change_id => 3,
-          :comment => 'aaa', :subject => 'bbb', :parent_id => 1, :status_id => 1}, :action_type => 'diff'
-      end
-      assert_response :success
-      assert_template 'create'
-
-      review = assigns :review
-      assert_equal(1, review.project_id)
-      assert_equal(3, review.change_id)
-      assert_equal("bbb", review.subject)
-      assert_equal(1, review.parent_id)
-      assert_equal("aaa", review.comment)
-      assert_equal(1, review.status_id)
-    end
-
-    should "create review for attachment" do
-      project = Project.find(1)
-      issue = Issue.generate!(:project => project)
-      attachment = FactoryGirl.create(:attachment, container: issue)
-      assert_difference 'CodeReview.count' do
-        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :comment => 'aaa',
-        :subject => 'bbb', :attachment_id => attachment.id}, :action_type => 'diff'
-      end
-      assert_response :success
-      assert_template 'create'
-    end
+    xhr :get, :new, project_id: 'ecookbook', :action_type => 'diff', :rev => 5
+    assert_response :success
+    assert_template '_new_form'
   end
+
+  test "should create new review when changeset has related issue" do
+    change = Change.find(3)
+    changeset = change.changeset
+    issue = Issue.generate!(project: @project)
+    changeset.issues << issue
+    changeset.save
+    assert_difference 'CodeReview.count' do
+      xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :change_id => 3,
+        :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
+    end
+    assert_response :success
+    assert_template 'create'
+  end
+
+  test "should not create review without settings" do
+    CodeReviewProjectSetting.destroy_all
+    assert_no_difference 'CodeReview.count' do
+      xhr :post, :new, project_id: 'ecookbook', :review => {
+        :line => 1, :change_id => 1, :comment => 'aaa', :subject => 'bbb'},
+        :action_type => 'diff'
+    end
+    assert_response :success
+  end
+
+  test "should save safe_attributes" do
+    change = Change.find(3)
+    changeset = change.changeset
+    issue = Issue.generate!(project: @project)
+    changeset.issues << issue
+    changeset.save
+    assert_difference 'CodeReview.count' do
+      xhr :post, :create, project_id: 'ecookbook', :review => {:line => 10, :change_id => 3,
+        :comment => 'aaa', :subject => 'bbb', :parent_id => 1, :status_id => 1}, :action_type => 'diff'
+    end
+    assert_response :success
+    assert_template 'create'
+
+    review = assigns :review
+    assert_equal(1, review.project_id)
+    assert_equal(3, review.change_id)
+    assert_equal("bbb", review.subject)
+    assert_equal(1, review.parent_id)
+    assert_equal("aaa", review.comment)
+    assert_equal(1, review.status_id)
+  end
+
+  test "should create review for attachment" do
+    project = Project.find(1)
+    issue = Issue.generate!(:project => project)
+    attachment = FactoryGirl.create(:attachment, container: issue)
+    assert_difference 'CodeReview.count' do
+      xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :comment => 'aaa',
+      :subject => 'bbb', :attachment_id => attachment.id}, :action_type => 'diff'
+    end
+    assert_response :success
+    assert_template 'create'
+  end
+
 
   test "show should redirect" do
     get :show, project_id: 'ecookbook', id: 9
@@ -248,12 +249,10 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
     #post :forward_to_revision, project_id: 'ecookbook', :path => '/test/some/path/in/the/repo'
   end
 
-  def test_preview
-    @request.session[:user_id] = 1
-    review = {}
-    review[:comment] = 'aaa'
-    xhr :get, :preview, project_id: 'ecookbook', :review => review
+  test 'should render preview' do
+    xhr :post, :preview, project_id: 'ecookbook', review: { comment: 'aaa' }
     assert_response :success
+    assert_match(/aaa/, @response.body)
   end
 
 end

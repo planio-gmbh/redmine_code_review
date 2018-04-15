@@ -100,7 +100,7 @@
           <p>
             <%= submit_tag l(:button_apply) %>
             <%= button_tag l(:button_cancel), onclick: "$(this).closest('div.box.update-form').hide(); return false;" %>
-            <%= link_to l(:label_preview), '#', onclick: "$('#preview_#{@review.id}').load('#{preview_code_reviews_path(@project)}', $('##{review_form_id}').serialize()); return false;" %>
+            <%= preview_link preview_code_reviews_path(@project), review_form_id, "preview_#{@review.id}" %>
           </p>
           <div id="preview_<%= @review.id%>" class="wiki"></div>
           <%= wikitoolbar_for "review_comment_#{@review.id}" %>
@@ -143,10 +143,8 @@
           </p>
           <p>
           <%= button_tag l(:button_apply), type: 'button', onclick: "$.post('#{j reply_code_review_path(@project, @review)}', $('##{message_form_id}').serialize())" %>
-            <%
-            reply_preview_id = "reply_preview_#{@review.id}"
-            -%>
-          <%= link_to_function l(:label_preview), "$('##{j reply_preview_id}').load('#{j preview_code_reviews_path(@project)}', $('##{j message_form_id}').serialize())" %>
+            <% reply_preview_id = "reply_preview_#{@review.id}" %>
+            <%= preview_link preview_code_reviews_path(@project), message_form_id, reply_preview_id %>
           </p>
           <div id="<%= reply_preview_id %>" class="wiki"></div>
           <%= wikitoolbar_for 'reply_comment_' + @review.id.to_s %>

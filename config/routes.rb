@@ -24,7 +24,8 @@ RedmineApp::Application.routes.draw do
         post :reply
       end
       collection do
-        get :preview
+        post :preview
+        patch :preview
         get :forward_to_revision
       end
     end
