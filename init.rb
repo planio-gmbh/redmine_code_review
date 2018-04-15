@@ -51,7 +51,7 @@ Redmine::Plugin.register :redmine_code_review do
 
   project_module :code_review do
     permission :view_code_review, {
-      code_review: [ :index, :show ],
+      code_reviews: [ :index, :show ],
       code_review_assignments: [:show],
       code_review_views: [
         :update_diff_view,
@@ -59,15 +59,15 @@ Redmine::Plugin.register :redmine_code_review do
         :update_revisions_view,
       ]
     }, { read: true }
-    permission :add_code_review, {:code_review => [:new, :create, :reply, :forward_to_revision, :preview]}, :require => :member
-    permission :edit_code_review, {:code_review => [:update]}, :require => :member
-    permission :delete_code_review, {:code_review => [:destroy]}, :require => :member
+    permission :add_code_review, {code_reviews: [:new, :create, :reply, :forward_to_revision, :preview]}, require: :member
+    permission :edit_code_review, {code_reviews: [:update]}, require: :member
+    permission :delete_code_review, {code_reviews: [:destroy]}, require: :member
     permission :assign_code_review, {code_review_assignments: [:new]}, require: :member
     permission :code_review_setting, {:code_review_settings => [:show, :update, :add_filter, :edit_filter, :sort]}, :require => :member
 
   end
 
-  menu :project_menu, :code_review, { :controller => 'code_review', :action => 'index' }, :caption => :code_reviews,
+  menu :project_menu, :code_review, { controller: 'code_reviews', action: 'index' }, caption: :code_reviews,
     :if => Proc.new{|project|
     setting = CodeReviewProjectSetting.find_or_create(project)
     project.repository != nil  and setting and !setting.hide_code_review_tab

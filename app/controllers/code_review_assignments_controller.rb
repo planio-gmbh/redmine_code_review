@@ -34,9 +34,16 @@ class CodeReviewAssignmentsController < ApplicationController
         changeset_id = Change.find(code[:change_id]).changeset_id
       end
 
+      if changeset_id.nil? and
+         code[:rev] and
+         changeset = repository.find_changeset_by_name(code[:rev])
+
+        changeset_id = changeset.id
+      end
+
       if changeset_id
         code[:changeset_id] = changeset_id
-        changeset = repository.changesets.find changeset_id
+        changeset ||= repository.changesets.find changeset_id
         issue[:subject] << " [#{changeset.text_tag}: #{changeset.short_comments}]" if changeset
       end
 

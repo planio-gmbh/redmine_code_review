@@ -36,17 +36,14 @@ class CodeReview < ActiveRecord::Base
 
   def is_closed?
     issue.closed?
-    #self.root.status == STATUS_CLOSED
   end
 
   def close
     issue.status = IssueStatus.find(5)
-    #self.root.status = STATUS_CLOSED
   end
 
   def reopen
     issue.status = IssueStatus.find(1)
-    #self.root.status = STATUS_OPEN
   end
 
   def committer

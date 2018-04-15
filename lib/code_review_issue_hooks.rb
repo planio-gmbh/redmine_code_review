@@ -26,7 +26,7 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
 
       context[:hook_caller].send(
         :render,
-        partial: 'code_review/issues_show_details_bottom',
+        partial: 'hooks/redmine_code_review/issues_show_details_bottom',
         locals: {
           project: project, issue: issue,
           review: issue.code_review,

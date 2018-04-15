@@ -36,10 +36,10 @@
 
       <!-- toolbar -->
       <div class="contextual">
-        <% if authorize_for('code_review', 'update') %>
+        <% if authorize_for('code_reviews', 'update') %>
           <%= link_to l(:button_update), '#', onclick: "$('#update-form-#{@review.id}').show();return false;", class: 'icon icon-edit' %>
         <% end %>
-        <% if authorize_for('code_review', 'destroy') %>
+        <% if authorize_for('code_reviews', 'destroy') %>
           <%= link_to(l(:button_delete),
                       code_review_path(@project, @review),
                       method: :delete,
@@ -116,7 +116,7 @@
     <% end %>
 
     <!-- reply form -->
-    <% if authorize_for('code_review', 'reply') -%>
+    <% if authorize_for('code_reviews', 'reply') -%>
       <p>
         <%= toggle_link l(:button_reply), "reply_#{@review.id}", :focus => 'reply_comment_' + @review.id.to_s %>
       </p>
@@ -144,11 +144,11 @@
               :id => 'reply_comment_' + @review.id.to_s %>
           </p>
           <p>
-          <%= button_tag l(:button_apply), type: 'button', onclick: "$.post('#{reply_code_review_path(@project, @review)}', $('##{message_form_id}').serialize())" %>
+          <%= button_tag l(:button_apply), type: 'button', onclick: "$.post('#{j reply_code_review_path(@project, @review)}', $('##{message_form_id}').serialize())" %>
             <%
             reply_preview_id = "reply_preview_#{@review.id}"
             -%>
-            <%= link_to_function l(:label_preview), "$('##{reply_preview_id}').load('#{url_for(:controller => 'code_review', :action => 'preview', :id => @project)}', $('##{message_form_id}').serialize())" %>
+          <%= link_to_function l(:label_preview), "$('##{j reply_preview_id}').load('#{j preview_code_review_url(@project)}', $('##{j message_form_id}').serialize())" %>
           </p>
           <div id="<%= reply_preview_id %>" class="wiki"></div>
           <%= wikitoolbar_for 'reply_comment_' + @review.id.to_s %>

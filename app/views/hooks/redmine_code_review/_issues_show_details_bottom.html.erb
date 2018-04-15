@@ -5,7 +5,7 @@
       <%
       label = URI.decode("#{review.repository_identifier + ':' if review.repository_identifier}#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}")
       -%>
-      <%= link_to label, controller: 'code_review', action: 'show', id: review.project, review_id: review.id, repository_id: review.repository_identifier %>
+    <%= link_to label, code_review_path(review.project, review, repository_id: review.repository_identifier) %>
     </td>
   </tr>
 <% end %>

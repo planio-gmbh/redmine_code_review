@@ -44,10 +44,9 @@
 
         <%
           issue = review.issue
-          url = link_to("##{issue.id} #{review.subject}(#{issue.status})",
-                        :controller => 'code_review', :action => 'show',
-                        :id => project, :review_id => review.id,
-                        :repository_id => repository_id)
+          url = link_to "##{issue.id} #{review.subject}(#{issue.status})",
+                        code_review_url(project, review,
+                                        repository_id: repository_id)
         %>
 
         var review = new CodeReview('<%= j review.id %>');

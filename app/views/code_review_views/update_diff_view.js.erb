@@ -1,6 +1,6 @@
 $('#code_review').html('<%= j render partial: 'update_diff_view' %>');
 
-var is_readonly = <%= !authorize_for('code_review', 'new') %>;
+var is_readonly = <%= !authorize_for('code_reviews', 'new') %>;
 var is_diff = <%= !!(@action_type == 'diff' or (@attachment and @attachment.is_diff?)) %>;
 window.path = '<%= j @path -%>';
 

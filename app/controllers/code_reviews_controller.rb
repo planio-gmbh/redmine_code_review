@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class CodeReviewController < ApplicationController
+class CodeReviewsController < ApplicationController
   include RedmineCodeReview::RedirectToReview
 
   before_filter :find_project, :authorize, :find_user, :find_setting, :find_repository
@@ -55,7 +55,7 @@ class CodeReviewController < ApplicationController
       "left join #{Issue.table_name} on issue_id = #{Issue.table_name}.id " +
       "left join #{IssueStatus.table_name} on #{Issue.table_name}.status_id = #{IssueStatus.table_name}.id").offset(@review_pages.offset)
     @i_am_member = @user.member_of?(@project)
-    render :template => 'code_review/index', :layout => !request.xhr?
+    render layout: !request.xhr?
   end
 
 
@@ -203,8 +203,7 @@ class CodeReviewController < ApplicationController
   end
 
   def preview
-    @text = params[:review][:comment]
-    @text ||= params[:reply][:comment]
+    @text = (params[:reply] || params[:review])[:comment]
     render partial: 'common/preview'
   end
 

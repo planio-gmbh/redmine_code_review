@@ -6,19 +6,19 @@
 
 <%= javascript_tag do %>
   $(document).ready(function(){
-    $.get('<%= j update_diff_view_code_review_path(project,
-                                                   repository_id: @repository.id,
-                                                   changeset_id: changeset.id) %>',
+    $.get('<%= j update_diff_view_code_review_path(project) %>',
           {
-            action_type:'<%= j params[:action] %>',
-            review_id: '<%= j params[:review_id] %>',
-            path:'<%= j path %>',
-            rev_to: '<%= j params[:rev_to] %>'
+            repository_id:'<%= j @repository.id.to_s %>',
+            changeset_id: '<%= j changeset.id.to_s %>',
+            action_type:  '<%= j params[:action] %>',
+            review_id:    '<%= j params[:review_id] %>',
+            path:         '<%= j path %>',
+            rev_to:       '<%= j params[:rev_to] %>'
           }
     );
   });
 <% end %>
 
 <% else %>
-  <%= render partial: 'code_review/change_entry_norevision_view', locals: { project: project } %>
+  <%= render partial: 'code_reviews/change_entry_norevision_view', locals: { project: project } %>
 <% end %>

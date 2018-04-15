@@ -54,7 +54,7 @@
               codepath = review_path[0, 15] + '...' + review_path[review_path.length - 35, 35]
             end
             -%>
-            <%= link_to(codepath, {:controller => 'code_review', :action => 'show', :id => @project, :review_id => review.id}, :title => review_path) -%>
+            <%= link_to codepath, code_review_path(@project, review), :title => review_path %>
          </td>
           <td><%= review.line %></td>
           <td><%= review.revision %></td>

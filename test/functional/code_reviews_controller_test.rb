@@ -16,29 +16,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
-class CodeReviewControllerTest < ActionController::TestCase
+class CodeReviewsControllerTest < Redmine::ControllerTest
   fixtures :code_reviews, :projects, :users, :repositories,
   :changesets, :changes, :members, :member_roles, :roles, :issues, :issue_statuses,
   :enumerations, :issue_categories, :trackers, :projects, :projects_trackers,
   :code_review_project_settings, :attachments, :code_review_assignments,
   :code_review_user_settings
-  def setup
-    @controller = CodeReviewController.new
-    @request    = ActionController::TestRequest.new
-    @response   = ActionController::TestResponse.new
-    @request.env["HTTP_REFERER"] = '/'
-    enabled_module = EnabledModule.new
-    enabled_module.project_id = 1
-    enabled_module.name = 'code_review'
-    enabled_module.save
-    enabled_module = EnabledModule.new
-    enabled_module.project_id = 2
-    enabled_module.name = 'code_review'
-    enabled_module.save
+
+  setup do
+    Project.find(1).enabled_modules.create! name: 'issue_tracking' rescue nil
+    Project.find(1).enabled_modules.create! name: 'code_review' rescue nil
 
     User.current = nil
-    roles = Role.all
-    roles.each {|role|
+
+    Role.all.each {|role|
       role.permissions << :view_code_review
       role.save
     }

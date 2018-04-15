@@ -18,8 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class CodeReviewApplicationHooks < Redmine::Hook::ViewListener
-  render_on :view_layouts_base_html_head, :partial => 'code_review/html_header'
-  render_on :view_layouts_base_body_bottom, :partial => 'code_review/body_bottom'
+  render_on :view_layouts_base_html_head,
+    partial: 'hooks/redmine_code_review/html_header'
 
   def view_layouts_base_body_bottom(context)
     if project = context[:project] and
