@@ -5,10 +5,10 @@ var is_diff = <%= !!(@action_type == 'diff' or (@attachment and @attachment.is_d
 window.path = '<%= j @path -%>';
 
 <% if @attachment %>
-  var addReviewUrl = '<%= j new_code_review_url id: @project, action_type: 'attachment', attachment_id: @attachment.id %>';
+  var addReviewUrl = '<%= j new_code_review_url @project, action_type: 'attachment', attachment_id: @attachment.id %>';
 <% else %>
   // TODO rev und repo koennen im prinzip raus wegen changeset
-  var addReviewUrl = '<%= j new_code_review_url id: @project, action_type: @action_type, change_id: @change.try(:id), rev: @rev, rev_to: @rev_to, repository_id: @repository.id, changeset_id: @changeset.id, path: @path %>';
+  var addReviewUrl = '<%= j new_code_review_url @project, action_type: @action_type, change_id: @change.try(:id), rev: @rev, rev_to: @rev_to, repository_id: @repository.id, changeset_id: @changeset.id, path: @path %>';
 <% end %>
 
 setAddReviewButton(addReviewUrl, '<%= j image_tag('edit.png', :alt => l(:label_add_review), :title => l(:label_add_review)) %>', is_readonly, is_diff);
@@ -17,10 +17,10 @@ window.showReviewImageTag = '<%= j image_tag('review.png', :plugin => 'redmine_c
 window.showClosedReviewImageTag = '<%= j image_tag('closed_review.png', :plugin => 'redmine_code_review', :alt => l(:label_show_review), :title => l(:label_show_review)) %>';
 
 <% for review in @reviews do %>
-  setShowReviewButton('<%= j code_review_url(id: @project, review_id: review) %>', <%= review.line %>, '<%= review.id %>', <%= review.is_closed? %>, <%= review.file_count %> );
+  setShowReviewButton('<%= j code_review_url(@project, review) %>', <%= review.line %>, '<%= review.id %>', <%= review.is_closed? %>, <%= review.file_count %> );
 <% end %>
 
 <% if @show_review -%>
-  popupReview('<%= @show_review.id %>', '<%= j code_review_url(id: @project, review_id: @show_review.id) %>');
+  popupReview('<%= @show_review.id %>', '<%= j code_review_url(@project, @show_review) %>');
 <% end -%>
 $('#content table.filecontent:first').before($('#code-review-assign-link'));

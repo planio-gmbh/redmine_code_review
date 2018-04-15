@@ -79,10 +79,9 @@
           remote: true, method: :patch, html: {id: review_form_id} do |f|  %>
           <%= f.hidden_field :lock_version %>
           <%= hidden_field :issue, :lock_version%>
-          <%= hidden_field_tag :review_id, @review.id %>
           <p>
             <label><b><%= l(:field_subject)%>:</b></label>
-            <%= f.text_field :subject, :size => 70, :value => @review.subject%>
+            <%= f.text_field :subject, size: 70 %>
           </p>
           <% if @allowed_statuses and @allowed_statuses.any? %>
             <p>
@@ -101,7 +100,7 @@
           <p>
             <%= submit_tag l(:button_apply) %>
             <%= button_tag l(:button_cancel), onclick: "$(this).closest('div.box.update-form').hide(); return false;" %>
-            <%= link_to l(:label_preview), '#', onclick: "$('#preview_#{@review.id}').load('#{preview_code_review_path(@project)}', $('##{review_form_id}').serialize()); return false;" %>
+            <%= link_to l(:label_preview), '#', onclick: "$('#preview_#{@review.id}').load('#{preview_code_reviews_path(@project)}', $('##{review_form_id}').serialize()); return false;" %>
           </p>
           <div id="preview_<%= @review.id%>" class="wiki"></div>
           <%= wikitoolbar_for "review_comment_#{@review.id}" %>
@@ -131,7 +130,6 @@
           <% if @allowed_statuses and @allowed_statuses.any? %>
             <p>
               <label><%= l(:field_status) %>:</label>
-              <%  # select :review, :status, {l(:label_review_closed) => CodeReview::STATUS_CLOSED, l(:label_review_open) => CodeReview::STATUS_OPEN} %>
               <%= select :review, :status_id, (@allowed_statuses.collect {|p| [p.name, p.id]}), :required => true %>
             </p>
           <% end %>
@@ -148,7 +146,7 @@
             <%
             reply_preview_id = "reply_preview_#{@review.id}"
             -%>
-          <%= link_to_function l(:label_preview), "$('##{j reply_preview_id}').load('#{j preview_code_review_url(@project)}', $('##{j message_form_id}').serialize())" %>
+          <%= link_to_function l(:label_preview), "$('##{j reply_preview_id}').load('#{j preview_code_reviews_path(@project)}', $('##{j message_form_id}').serialize())" %>
           </p>
           <div id="<%= reply_preview_id %>" class="wiki"></div>
           <%= wikitoolbar_for 'reply_comment_' + @review.id.to_s %>

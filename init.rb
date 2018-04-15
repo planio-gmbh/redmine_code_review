@@ -67,11 +67,17 @@ Redmine::Plugin.register :redmine_code_review do
 
   end
 
-  menu :project_menu, :code_review, { controller: 'code_reviews', action: 'index' }, caption: :code_reviews,
-    :if => Proc.new{|project|
-    setting = CodeReviewProjectSetting.find_or_create(project)
-    project.repository != nil  and setting and !setting.hide_code_review_tab
-  }, :after => :repository
+  menu :project_menu,
+    :code_review,
+    { controller: 'code_reviews', action: 'index' },
+    caption: :code_reviews,
+    after: :repository,
+    param: :project_id,
+    if: ->(project){
+      setting = CodeReviewProjectSetting.find_or_create(project) and
+      project.repository.present? and
+      !setting.hide_code_review_tab
+    }
 
 
   Redmine::WikiFormatting::Macros.register do

@@ -12,6 +12,7 @@ module RedmineCodeReview
         repository || raise(ActiveRecord::RecordNotFound)
       end
     end
+    private :repository
 
   end
 end

@@ -45,7 +45,7 @@
       <%= f.text_field :subject, :size => 70, :required => true %>
     </p>
 
-    <% if @setting.tracker_in_review_dialog %>
+    <% if @tracker_in_review_dialog %>
       <p>
         <label><b><%= l(:label_tracker) %>:</b></label>
         <%= select :issue, :tracker_id, @project.trackers.collect {|t| [t.name, t.id]}, :required => true %>
@@ -109,7 +109,7 @@
     <p>
       <%= submit_tag l(:button_apply) %>
       <%= button_tag l(:button_cancel), onclick: 'hideForm();' %>
-      <%= preview_link preview_code_review_path(@project), 'review_form' %>
+      <%= preview_link preview_code_reviews_path(@project), 'review_form' %>
     </p>
     <div id="preview" class="wiki"></div>
     <%= wikitoolbar_for 'review_comment' %>

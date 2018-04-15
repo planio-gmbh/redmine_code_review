@@ -33,53 +33,52 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
       role.permissions << :view_code_review
       role.save
     }
+
+    issues(:issues_003).update_column :status_id, 5  # close it
+    @project = Project.find 'ecookbook'
+    @request.session[:user_id] = 1
   end
 
-  context "index" do
-    should "show review list" do
-      @request.session[:user_id] = 1
-      get :index, :id => 1
-      assert_response :success
-    end
+  test "index should show open review list" do
+    get :index, project_id: 'ecookbook'
+    assert_response :success
+    assert reviews = assigns(:reviews)
+    assert_equal 2, reviews.size
+  end
 
-    should "not show review list if module was not enabled." do
-      @request.session[:user_id] = 1
-      get :index, :id => 3
-      assert_response 403
-    end
+  test "index not show review list if module was not enabled." do
+    get :index, project_id: 'onlinestore'
+    assert_response 403
+  end
 
-    should "show all review list if show_closed is true" do
-      @request.session[:user_id] = 1
-      get :index, :id => 1, :show_closed => true
-      assert_response :success
-    end
-
+  test "index should show all review list if show_closed is true" do
+    get :index, project_id: 'ecookbook', show_closed: 'true'
+    assert_response :success
+    assert reviews = assigns(:reviews)
+    assert_equal 3, reviews.size
   end
 
   test "new should render form" do
-    @request.session[:user_id] = 1
-    xhr :get, :new, :id => 1, :action_type => 'diff', :rev => 5
+    xhr :get, :new, project_id: 'ecookbook', :action_type => 'diff', :rev => 5
     assert_response :success
     assert_template 'new'
   end
 
   context 'create' do
     should 'create new review' do
-      @request.session[:user_id] = 1
       assert_difference 'CodeReview.count' do
-        xhr :post, :create, :id => 1, :review => {:line => 1, :change_id => 1,
+        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :change_id => 1,
           :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
       end
       assert_response :success
       assert_template 'create'
 
-      xhr :get, :new, :id => 1, :action_type => 'diff', :rev => 5
+      xhr :get, :new, project_id: 'ecookbook', :action_type => 'diff', :rev => 5
       assert_response :success
       assert_template '_new_form'
     end
 
     should "create new review when changeset has related issue" do
-      @request.session[:user_id] = 1
       project = Project.find(1)
       change = Change.find(3)
       changeset = change.changeset
@@ -87,7 +86,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
       changeset.issues << issue
       changeset.save
       assert_difference 'CodeReview.count' do
-        xhr :post, :create, :id => 1, :review => {:line => 1, :change_id => 3,
+        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :change_id => 3,
           :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
       end
       assert_response :success
@@ -95,14 +94,13 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 
       CodeReviewProjectSetting.destroy_all
       assert_no_difference 'CodeReview.count' do
-        xhr :post, :new, :id => 1, :review => {:line => 1, :change_id => 1,
+        xhr :post, :new, project_id: 'ecookbook', :review => {:line => 1, :change_id => 1,
           :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
       end
       assert_response 200
     end
 
     should "save safe_attributes" do
-      @request.session[:user_id] = 1
       project = Project.find(1)
       change = Change.find(3)
       changeset = change.changeset
@@ -110,7 +108,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
       changeset.issues << issue
       changeset.save
       assert_difference 'CodeReview.count' do
-        xhr :post, :create, :id => 1, :review => {:line => 10, :change_id => 3,
+        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 10, :change_id => 3,
           :comment => 'aaa', :subject => 'bbb', :parent_id => 1, :status_id => 1}, :action_type => 'diff'
       end
       assert_response :success
@@ -126,12 +124,11 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
     end
 
     should "create review for attachment" do
-      @request.session[:user_id] = 1
       project = Project.find(1)
       issue = Issue.generate!(:project => project)
       attachment = FactoryGirl.create(:attachment, container: issue)
       assert_difference 'CodeReview.count' do
-        xhr :post, :create, :id => 1, :review => {:line => 1, :comment => 'aaa',
+        xhr :post, :create, project_id: 'ecookbook', :review => {:line => 1, :comment => 'aaa',
         :subject => 'bbb', :attachment_id => attachment.id}, :action_type => 'diff'
       end
       assert_response :success
@@ -139,30 +136,18 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
     end
   end
 
-  def test_show
-    @request.session[:user_id] = 1
-    get :show, :id => 1, :review_id => 9
+  test "show should redirect" do
+    get :show, project_id: 'ecookbook', id: 9
     assert_response 302
-    #assert_template '_show'
   end
 
-  context "show" do
-    should "be success with review_id" do
-      @request.session[:user_id] = 1
-      get :show, :id => 1, :review_id => 9
-      assert_response 302
-      #assert_template '_show'
-    end
-  end
 
-  def test_destroy
-    project = Project.find(1)
-    Issue.generate!(:project => project)
-    review = FactoryGirl.create(:code_review, project: project)
-    @request.session[:user_id] = 1
+  test "should destroy review and issue" do
     assert_difference 'CodeReview.count', -1 do
-      xhr :delete, :destroy, id: 1, review_id: review.id
-      assert_response :success
+      assert_difference 'Issue.count', -1 do
+        xhr :delete, :destroy, project_id: 'ecookbook', id: 11
+        assert_response :success
+      end
     end
   end
 
@@ -172,7 +157,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 
       review = CodeReview.find(9)
       assert_difference 'Journal.count' do
-        xhr :post, :reply, :id => 1, :review_id => 9,
+        xhr :post, :reply, project_id: 'ecookbook', id: 9,
           :reply => {:comment => 'aaa'}, :issue=> {:lock_version => review.issue.lock_version}
       end
       assert_response :success
@@ -185,7 +170,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 
       review = CodeReview.find(9)
       assert_no_difference 'Journal.count' do
-        xhr :post, :reply, :id => 1, :review_id => 9,
+        xhr :post, :reply, project_id: 'ecookbook', id: 9,
           :reply => {:comment => 'aaa'}, :issue=> {:lock_version => review.issue.lock_version + 1}
       end
       assert_response :success
@@ -197,7 +182,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
   def test_reply_lock_error
     @request.session[:user_id] = 1
     assert_no_difference 'Journal.count' do
-      xhr :post, :reply, :id => 1, :review_id => 9,
+      xhr :post, :reply, project_id: 'ecookbook', id: 9,
         :reply => {:comment => 'aaa'}, :issue=> {:lock_version => 1}
     end
     assert_response :success
@@ -212,7 +197,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 #    review.reopen
 #    review.save
 #    assert !review.is_closed?
-#    get :close, :id => 1, :review_id => review_id
+#    get :close, project_id: 'ecookbook', id: review_id
 #    assert_response :success
 #    assert_template '_show'
 #    review = CodeReview.find(review_id)
@@ -225,7 +210,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 #    review.close
 #    review.save
 #    assert review.is_closed?
-#    get :reopen, :id => 1, :review_id => 1
+#    get :reopen, project_id: 'ecookbook', id: 1
 #    assert_response :success
 #    assert_template '_show'
 #    review = CodeReview.find(1)
@@ -233,11 +218,10 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 #  end
 
   def test_update
-    @request.session[:user_id] = 1
     review_id = 9
     review = CodeReview.find(review_id)
     assert_equal('Unable to print recipes', review.comment)
-    xhr :patch, :update, :id => 1, :review_id => review_id,
+    xhr :patch, :update, project_id: 'ecookbook', id: review_id,
       :review => {:comment => 'bbb', :lock_version => review.lock_version},
       :issue => {:lock_version => review.issue.lock_version}
     assert_response :success
@@ -250,7 +234,7 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
     review_id = 9
     review = CodeReview.find(review_id)
     assert_equal('Unable to print recipes', review.comment)
-    xhr :patch, :update, :id => 1, :review_id => review_id,
+    xhr :patch, :update, project_id: 'ecookbook', id: review_id,
       :review => {:comment => 'bbb', :lock_version => review.lock_version},
       :issue => {:lock_version => 1}
     assert_response :success
@@ -261,14 +245,14 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
 
   def test_forward_to_revision
     @request.session[:user_id] = 1
-    #post :forward_to_revision, :id => 1, :path => '/test/some/path/in/the/repo'
+    #post :forward_to_revision, project_id: 'ecookbook', :path => '/test/some/path/in/the/repo'
   end
 
   def test_preview
     @request.session[:user_id] = 1
     review = {}
     review[:comment] = 'aaa'
-    xhr :get, :preview, :id => 1, :review => review
+    xhr :get, :preview, project_id: 'ecookbook', :review => review
     assert_response :success
   end
 

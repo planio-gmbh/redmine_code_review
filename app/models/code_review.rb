@@ -25,9 +25,6 @@ class CodeReview < ActiveRecord::Base
   validates_presence_of :project_id, :user_id, :updated_by_id, :issue,
     :subject, :action_type, :line
 
-  STATUS_OPEN = 0
-  STATUS_CLOSED = 1
-
   attr_accessible :change_id, :subject, :line, :parent_id, :comment, :status_id, :issue
 
   def before_create

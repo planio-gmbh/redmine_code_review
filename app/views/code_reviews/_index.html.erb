@@ -1,20 +1,13 @@
 <h2><%= l(:code_reviews) %></h2>
 
-<% if @all_review_count > 0 %>
+<% if @reviews.present? %>
   <p>
     <%= form_tag(code_reviews_path(@project), method: :get, id: 'optionform') do %>
       <label for="show_closed">
         <%= check_box_tag 'show_closed', 'true', @show_closed, onchange: "$(this).closest('form').submit();" %> <%= l(:label_show_closed_reviews) %>
       </label>
     <% end %>
-    <%# observe_field 'show_closed', :with => 'show_closed', :update => 'content' %>
   </p>
-<% end %>
-
-<% if @reviews == nil or @reviews.length == 0 %>
-  <p class="nodata"><%= l(:label_no_data) %></p>
-<% else %>
-
 
   <table class="list">
     <thead>
@@ -67,5 +60,7 @@
   </table>
   <p class="pagination"><%= pagination_links_full @review_pages, @review_count %></p>
 
+<% else %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
 <% end %>
 

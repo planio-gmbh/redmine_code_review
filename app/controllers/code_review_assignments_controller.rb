@@ -3,6 +3,7 @@
 class CodeReviewAssignmentsController < ApplicationController
   include RedmineCodeReview::RedirectToReview
   include RedmineCodeReview::FindRepository
+  include RedmineCodeReview::FindSettings
 
   before_filter :find_project_by_project_id, :authorize
 
@@ -67,10 +68,5 @@ class CodeReviewAssignmentsController < ApplicationController
     end
   end
 
-  private
-
-  def settings
-    @settings ||= CodeReviewProjectSetting.find_or_create(@project)
-  end
 
 end

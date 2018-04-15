@@ -17,8 +17,10 @@
 
 class CodeReviewsController < ApplicationController
   include RedmineCodeReview::RedirectToReview
+  include RedmineCodeReview::FindRepository
+  include RedmineCodeReview::FindSettings
 
-  before_filter :find_project, :authorize, :find_user, :find_setting, :find_repository
+  before_filter :find_project_by_project_id, :authorize
 
   helper :sort
   include SortHelper
@@ -37,24 +39,16 @@ class CodeReviewsController < ApplicationController
     sort_update ["#{Issue.table_name}.id", "#{Issue.table_name}.status_id", "#{Issue.table_name}.subject",  "path", "updated_at", "user_id", "#{Changeset.table_name}.committer", "#{Changeset.table_name}.revision"]
 
     limit = per_page_option
-    @review_count = CodeReview.where(["project_id = ? and issue_id is NOT NULL", @project.id]).count
-    @all_review_count = CodeReview.where(['project_id = ?', @project.id]).count
-    @review_pages = Paginator.new @review_count, limit, params['page']
-    @show_closed = (params['show_closed'] == 'true')
-    show_closed_option = " and #{IssueStatus.table_name}.is_closed = ? "
-    if (@show_closed)
-      show_closed_option = ''
-    end
-    conditions = ["#{CodeReview.table_name}.project_id = ? and issue_id is NOT NULL" + show_closed_option, @project.id]
-    unless (@show_closed)
-      conditions << false
-    end
 
-    @reviews = CodeReview.order(sort_clause).limit(limit).where(conditions).joins(
-      "left join #{Change.table_name} on change_id = #{Change.table_name}.id  left join #{Changeset.table_name} on #{Change.table_name}.changeset_id = #{Changeset.table_name}.id " +
-      "left join #{Issue.table_name} on issue_id = #{Issue.table_name}.id " +
-      "left join #{IssueStatus.table_name} on #{Issue.table_name}.status_id = #{IssueStatus.table_name}.id").offset(@review_pages.offset)
-    @i_am_member = @user.member_of?(@project)
+    query = RedmineCodeReview::CodeReviewsQuery.new(@project, limit, params)
+    @review_count = query.count
+    @show_closed = query.show_closed?
+
+    @review_pages = Paginator.new @review_count, limit, params['page']
+
+    @reviews = query.scope.order(sort_clause)
+      .limit(limit).offset(@review_pages.offset)
+
     render layout: !request.xhr?
   end
 
@@ -83,7 +77,7 @@ class CodeReviewsController < ApplicationController
     end
 
     if @default_version_id.nil? and
-      issue = @review.open_assignment_issues(@user.id).detect{|i|
+      issue = @review.open_assignment_issues(User.current.id).detect{|i|
         i.fixed_version.present?
       }
 
@@ -100,14 +94,14 @@ class CodeReviewsController < ApplicationController
       @review.issue.save!
       if @review.changeset
         @review.changeset.issues.each {|issue|
-          create_relation @review, issue, @setting.issue_relation_type
-        } if @setting.auto_relation?
+          create_relation @review, issue, settings.issue_relation_type
+        } if settings.auto_relation?
       elsif @review.attachment and @review.attachment.container_type == 'Issue'
         issue = Issue.find_by_id(@review.attachment.container_id)
-        create_relation @review, issue, @setting.issue_relation_type if @setting.auto_relation?
+        create_relation @review, issue, settings.issue_relation_type if settings.auto_relation?
       end
       watched_users = []
-      @review.open_assignment_issues(@user.id).each {|issue|
+      @review.open_assignment_issues(User.current.id).each {|issue|
         unless @review.issue.parent_id == issue.id
           create_relation @review, issue, IssueRelation::TYPE_RELATES
         end
@@ -130,7 +124,7 @@ class CodeReviewsController < ApplicationController
 
 
   def show
-    @review = CodeReview.find params[:review_id]
+    @review = CodeReview.find params[:id]
 
     @repository = @review.repository
     @issue = @review.issue
@@ -143,7 +137,7 @@ class CodeReviewsController < ApplicationController
   end
 
   def reply
-    @review = CodeReview.find(params[:review_id].to_i)
+    @review = CodeReview.find(params[:id].to_i)
     @issue = @review.issue
     @issue.lock_version = params[:issue][:lock_version]
     comment = params[:reply][:comment]
@@ -163,14 +157,14 @@ class CodeReviewsController < ApplicationController
   end
 
   def update
-    @review = CodeReview.find(params[:review_id].to_i)
+    @review = CodeReview.find(params[:id].to_i)
     @review.issue.init_journal(User.current, nil)
     @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
     @issue = @review.issue
     @issue.lock_version = params[:issue][:lock_version]
     @review.lock_version = params[:review][:lock_version]
     @review.assign_attributes(params[:review])
-    @review.updated_by_id = @user.id
+    @review.updated_by_id = User.current.id
 
     CodeReview.transaction do
       if @review.save and @issue.save
@@ -187,18 +181,18 @@ class CodeReviewsController < ApplicationController
 
 
   def destroy
-    @review = CodeReview.find params[:review_id]
+    @review = CodeReview.where(project: @project).find params[:id]
     @review.issue.destroy # review is destroyed through dependend: destroy
   end
 
   def forward_to_revision
     path = params[:path]
     rev = params[:rev]
-    changesets = @repository.latest_changesets(path, rev, Setting.repository_log_display_limit.to_i)
+    changesets = repository.latest_changesets(path, rev, Setting.repository_log_display_limit.to_i)
     change = changesets[0]
 
     identifier = change.identifier
-    redirect_to url_for(:controller => 'repositories', :action => 'entry', :id => @project, :repository_id => @repository_id) + '/' + path + '?rev=' + identifier.to_s
+    redirect_to url_for(:controller => 'repositories', :action => 'entry', :id => @project, :repository_id => repository.identifier_param) + '/' + path + '?rev=' + identifier.to_s
 
   end
 
@@ -210,35 +204,9 @@ class CodeReviewsController < ApplicationController
 
   private
 
-  def find_repository
-    if params[:repository_id].present?
-      @repository = @project.repositories.find_by_identifier_param(params[:repository_id])
-    else
-      @repository = @project.repository
-    end
-    if @repository
-      @repository_id = @repository.identifier_param
-    else
-      render_404
-    end
-  end
-
-  def find_project
-    # @project variable must be set before calling the authorize filter
-    @project = Project.find(params[:id])
-  end
-
-  def find_user
-    @user = User.current
-  end
-
-
-  def find_setting
-    @setting = CodeReviewProjectSetting.find_or_create(@project)
-  end
 
   def get_parent_candidate(revision)
-    changeset = @repository.find_changeset_by_name(revision)
+    changeset = repository.find_changeset_by_name(revision)
     changeset.issues.each {|issue|
       return Issue.find(issue.parent_issue_id) if issue.parent_issue_id
     }
@@ -258,20 +226,21 @@ class CodeReviewsController < ApplicationController
   # initializes data used for new and create
   # TODO make that nicer
   def new_or_create
+    @tracker_in_review_dialog = settings.tracker_in_review_dialog
     @review = CodeReview.new
     @review.issue = Issue.new
 
     if params[:issue] and params[:issue][:tracker_id]
       @review.issue.tracker_id = params[:issue][:tracker_id].to_i
     else
-      @review.issue.tracker_id = @setting.tracker_id
+      @review.issue.tracker_id = settings.tracker_id
     end
     @review.assign_attributes(params[:review])
     @review.project_id = @project.id
     @review.issue.project_id = @project.id
 
-    @review.user_id = @user.id
-    @review.updated_by_id = @user.id
+    @review.user_id = User.current.id
+    @review.updated_by_id = User.current.id
     @review.issue.start_date ||= Date.today if Setting.default_issue_start_date_to_creation_date?
     @review.action_type = params[:action_type]
     @review.rev = params[:rev] unless params[:rev].blank?

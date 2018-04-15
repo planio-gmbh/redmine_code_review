@@ -19,6 +19,15 @@ RedmineApp::Application.routes.draw do
 
   scope 'projects/:project_id' do
     resources :code_review_assignments
+    resources :code_reviews do
+      member do
+        post :reply
+      end
+      collection do
+        get :preview
+        get :forward_to_revision
+      end
+    end
 
     # view patching via js 'hooks'.
     get 'code_review_views/update_diff',
@@ -37,32 +46,6 @@ RedmineApp::Application.routes.draw do
   end
 
   scope 'projects/:id' do
-
-    # the goal
-    # resources :code_reviews
-
-    get    'code_reviews',     to: 'code_reviews#index',  as: :code_reviews
-    get    'code_reviews/new', to: 'code_reviews#new',    as: :new_code_review
-    post   'code_reviews', to: 'code_reviews#create'
-
-    patch  'code_reviews/:review_id', to: 'code_reviews#update'
-    delete 'code_reviews/:review_id', to: 'code_reviews#destroy'
-
-    post   'code_reviews/:review_id/reply', to: 'code_reviews#reply', as: :reply_code_review
-
-    get    'code_reviews/:review_id', to: 'code_reviews#show',   as: :code_review
-
-    match 'code_review/preview',
-      to: 'code_reviews#preview',
-      via: [:get, :post],
-      as: :preview_code_review
-
-
-    # not sure where this belongs
-    get 'code_review/forward_to_revision',
-      to: 'code_reviews#forward_to_revision',
-      as: :forward_to_revision_code_review
-
 
     match 'code_review_settings/:action', controller: 'code_review_settings',
                                           via: [:get, :post, :put, :patch]
