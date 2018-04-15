@@ -36,19 +36,19 @@ class CodeReviewApplicationHooks < Redmine::Hook::ViewListener
       partial = case controller
       when AttachmentsController
         if params[:action] == "show"
-          'code_review/change_attachement_view'
+          'code_review_views/change_attachment_view'
         end
       when RepositoriesController
         case params[:action]
         when 'show', 'revisions'
-          'code_review/change_repository_view'
+          'code_review_views/change_repository_view'
         when 'revision'
-          'code_review/change_revision_view'
+          'code_review_views/change_revision_view'
         when 'diff', 'entry', 'annotate'
           if params[:rev].blank? or params[:rev] == 'master'
-            'code_review/change_entry_norevision_view'
+            'code_review_views/change_entry_norevision_view'
           else
-            'code_review/change_diff_view'
+            'code_review_views/change_diff_view'
           end
         end
       end

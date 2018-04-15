@@ -2,6 +2,7 @@
 
 class CodeReviewAssignmentsController < ApplicationController
   include RedmineCodeReview::RedirectToReview
+  include RedmineCodeReview::FindRepository
 
   before_filter :find_project_by_project_id, :authorize
 
@@ -63,17 +64,6 @@ class CodeReviewAssignmentsController < ApplicationController
 
   def settings
     @settings ||= CodeReviewProjectSetting.find_or_create(@project)
-  end
-
-  def repository
-    @repository ||= begin
-      repository = if params[:repository_id].present?
-        @project.repositories.find_by_identifier_param(params[:repository_id])
-      else
-        @project.repository
-      end
-      repository || raise(ActiveRecord::RecordNotFound)
-    end
   end
 
 end

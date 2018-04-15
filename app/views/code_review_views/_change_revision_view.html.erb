@@ -50,7 +50,7 @@
                         :repository_id => repository_id)
         %>
 
-        var review = new CodeReview(<%= review.id %>);
+        var review = new CodeReview('<%= j review.id %>');
         review.url = '<%= j url %>';
         <% if review.is_closed? %>
           review.is_closed = true;

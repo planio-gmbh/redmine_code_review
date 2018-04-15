@@ -36,7 +36,7 @@ Rails.configuration.to_prepare do
     Attachment.send(:include, CodeReviewAttachmentPatch)
   end
 
-  RepositoriesController.send :helper, :code_review
+  RepositoriesController.send :helper, RedmineCodeReview::ShowAssignmentsHelper
 end
 
 Redmine::Plugin.register :redmine_code_review do
@@ -51,12 +51,13 @@ Redmine::Plugin.register :redmine_code_review do
 
   project_module :code_review do
     permission :view_code_review, {
-      code_review: [:update_diff_view,
-                    :update_attachment_view,
-                    :update_revisions_view,
-                    :index,
-                    :show],
-      code_review_assignments: [:show]
+      code_review: [ :index, :show ],
+      code_review_assignments: [:show],
+      code_review_views: [
+        :update_diff_view,
+        :update_attachment_view,
+        :update_revisions_view,
+      ]
     }, { read: true }
     permission :add_code_review, {:code_review => [:new, :create, :reply, :forward_to_revision, :preview]}, :require => :member
     permission :edit_code_review, {:code_review => [:update]}, :require => :member

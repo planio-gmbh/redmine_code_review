@@ -24,7 +24,6 @@ var rev_to = '';
 var path = '';
 var urlprefix = '';
 var review_form_dialog = null;
-var repository_id = null;
 var filenames = [];
 
 var addReviewUrl = null;
@@ -103,7 +102,7 @@ function UpdateRevisionView() {
     });
 }
 
-function setAddReviewButton(url, change_id, image_tag, is_readonly, is_diff, attachment_id){
+function setAddReviewButton(addReviewUrl, image_tag, is_readonly, is_diff){
     var filetables = [];
     var j = 0;
     $('table').each(function(){
@@ -116,13 +115,7 @@ function setAddReviewButton(url, change_id, image_tag, is_readonly, is_diff, att
         filenames[j] = $.trim($(this).text());
         j++;
     });
-    window.addReviewUrl = url + '?change_id=' + change_id + '&action_type=' + action_type +
-        '&rev=' + rev + '&rev_to=' + rev_to +
-        '&attachment_id=' + attachment_id + '&repository_id=' + encodeURIComponent(repository_id);
 
-    if (window.path != null && window.path.length > 0) {
-        window.addReviewUrl = window.addReviewUrl + '&path=' + encodeURIComponent(window.path);
-    }
     var num = 0;
     if (is_diff) {
         num = 1;

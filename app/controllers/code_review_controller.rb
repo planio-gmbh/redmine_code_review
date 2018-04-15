@@ -128,66 +128,6 @@ class CodeReviewController < ApplicationController
     logger.error e
   end
 
-  def update_diff_view
-    if params[:review_id].present?
-      @show_review_id = params[:review_id].to_i
-      @show_review = CodeReview.find_by_id(@show_review_id)
-    end
-    @review = CodeReview.new
-    @rev = params[:rev] unless params[:rev].blank?
-    @rev_to = params[:rev_to] unless params[:rev_to].blank?
-    @path = params[:path] unless params[:path].blank?
-    @paths = []
-    @paths << @path unless @path.blank?
-
-    @action_type = params[:action_type]
-    changeset = @repository.find_changeset_by_name(@rev)
-    if @paths.empty?
-      changeset.filechanges.each{|chg|
-      }
-    end
-
-    url = @repository.url
-    root_url = @repository.root_url
-    if (url == nil || root_url == nil)
-      fullpath = @path
-    else
-      rootpath = url[root_url.length, url.length - root_url.length]
-      if rootpath.blank?
-        fullpath = @path
-      else
-        fullpath = (rootpath + '/' + @path).gsub(/[\/]+/, '/')
-      end
-    end
-    @change = nil
-    changeset.filechanges.each{|chg|
-      @change = chg if ((chg.path == fullpath) or ("/#{chg.path}" == fullpath)) or (chg.path == "/#{@path}")
-    }  unless @path.blank?
-
-    @changeset = changeset
-    if @path
-      @reviews = CodeReview.where(['file_path = ? and rev = ? and issue_id is NOT NULL', @path, @rev]).where(:project_id => @project.id).all
-    else
-      @reviews = CodeReview.where(['rev = ? and issue_id is NOT NULL', @rev]).where(:project_id => @project.id).all
-    end
-    @review.change_id = @change.id if @change
-  end
-
-  def update_attachment_view
-    if params[:review_id].present?
-      @show_review_id = params[:review_id].to_i
-      # FIXME access control?
-      @show_review = CodeReview.find_by_id(@show_review_id)
-    end
-    @attachment = Attachment.find(params[:attachment_id])
-    @attachment_id = @attachment.id
-    @review = CodeReview.new
-    @action_type = 'attachment'
-
-    @reviews = CodeReview.where(['attachment_id = (?) and issue_id is NOT NULL', @attachment_id]).all
-
-    render 'update_diff_view'
-  end
 
   def show
     @review = CodeReview.find params[:review_id]
@@ -268,13 +208,6 @@ class CodeReviewController < ApplicationController
     render partial: 'common/preview'
   end
 
-  def update_revisions_view
-    changeset_ids = params[:changeset_ids].to_s.split(',')
-    @changesets = changeset_ids.map do |id|
-      @repository.find_changeset_by_name(id) unless id.blank?
-    end
-    render partial: 'update_revisions'
-  end
 
   private
 

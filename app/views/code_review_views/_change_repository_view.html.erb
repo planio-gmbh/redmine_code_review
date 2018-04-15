@@ -19,9 +19,7 @@
 <% if @changesets %>
 
 <%
-  changeset_ids = safe_join @changesets.map(&:revision), ','
-  url = url_for controller: 'code_review', action: 'update_revisions_view',
-                id: project, repository_id: @repository.identifier_param
+  changeset_ids = safe_join @changesets.map(&:id), ','
 %>
 
   <div id="code_review_revisions"></div>
@@ -29,7 +27,7 @@
   <%= javascript_tag do %>
     $(document).ready(function(){
       $('#code_review_revisions').load(
-        '<%= j url %>',
+        '<%= j update_revisions_view_code_review_path project, repository_id: @repository.id %>',
         { changeset_ids: '<%= j changeset_ids %>'}
       );
     });

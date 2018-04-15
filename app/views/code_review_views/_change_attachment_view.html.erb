@@ -16,8 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 -%>
-<% attachment = Attachment.find(params[:id]) %>
-<% if attachment.is_text? or attachment.is_diff? %>
+<% if @attachment.is_text? or @attachment.is_diff? %>
 
   <div id="code_review">
     <div id="review_comment"/>
@@ -26,7 +25,7 @@
   <%= javascript_tag do %>
     $(document).ready(function(){
       $.get('<%= j update_attachment_view_code_review_path(project,
-                 attachment_id: attachment, review_id: params[:review_id]) %>');
+                 attachment_id: @attachment, review_id: params[:review_id]) %>');
     });
   <% end %>
 

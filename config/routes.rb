@@ -19,6 +19,21 @@ RedmineApp::Application.routes.draw do
 
   scope 'projects/:project_id' do
     resources :code_review_assignments
+
+    # view patching via js 'hooks'.
+    get 'code_review_views/update_diff',
+      to: 'code_review_views#update_diff_view',
+      as: :update_diff_view_code_review
+
+    get 'code_review_views/update_revisions',
+      to: 'code_review_views#update_revisions_view',
+      as: :update_revisions_view_code_review
+
+    get 'code_review_views/update_attachment',
+      to: 'code_review_views#update_attachment_view',
+      as: :update_attachment_view_code_review
+
+
   end
 
   scope 'projects/:id' do
@@ -48,19 +63,6 @@ RedmineApp::Application.routes.draw do
       to: 'code_review#forward_to_revision',
       as: :forward_to_revision_code_review
 
-
-    # view patching via js 'hooks'. Maybe separate controller as well.
-    get 'code_review_views/update_diff',
-      to: 'code_review#update_diff_view',
-      as: :update_diff_view_code_review
-
-    get 'code_review_views/update_revisions',
-      to: 'code_review#update_revisions_view',
-      as: :update_revisions_view_code_review
-
-    get 'code_review_views/update_attachment',
-      to: 'code_review#update_attachment_view',
-      as: :update_attachment_view_code_review
 
 
     #match 'code_review/:action', controller: 'code_review',

@@ -268,27 +268,9 @@ class CodeReviewControllerTest < ActionController::TestCase
     assert assigns(:error)
   end
 
-  def test_update_diff_view
-    @request.session[:user_id] = 1
-    review_id = 9
-    review = CodeReview.find(review_id)
-    assert_equal('Unable to print recipes', review.comment)
-    xhr :get, :update_diff_view, :id => 1, :review_id => review_id, :rev => 1, :path => '/test/some/path/in/the/repo'
-    assert_response :success
-  end
-
   def test_forward_to_revision
     @request.session[:user_id] = 1
     #post :forward_to_revision, :id => 1, :path => '/test/some/path/in/the/repo'
-  end
-
-  def test_update_attachment_view
-    @request.session[:user_id] = 1
-    review_id = 9
-    review = CodeReview.find(review_id)
-    assert_equal('Unable to print recipes', review.comment)
-    xhr :get, :update_attachment_view, :id => 1, :attachment_id => 1
-    assert_response :success
   end
 
   def test_preview
@@ -299,21 +281,4 @@ class CodeReviewControllerTest < ActionController::TestCase
     assert_response :success
   end
 
-  context "update_revisions_view" do
-    setup do
-      @request.session[:user_id] = 1
-    end
-
-    should "succeed if changeset_ids is nil" do
-      get :update_revisions_view, :id => 1
-      assert_response :success
-      assert_equal(0, assigns(:changesets).length)
-    end
-
-    should "succeed if changeset_ids is not nil" do
-      get :update_revisions_view, :id => 1, :changeset_ids => '1,2,3'
-      assert_response :success
-      assert_equal(3, assigns(:changesets).length)
-    end
-  end
 end
