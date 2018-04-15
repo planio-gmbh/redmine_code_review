@@ -96,7 +96,7 @@ class CodeReviewsController < ApplicationController
 
 
   def show
-    @review = CodeReview.find params[:id]
+    @review = find_code_review
 
     @repository = @review.repository
     @issue = @review.issue
@@ -109,7 +109,7 @@ class CodeReviewsController < ApplicationController
   end
 
   def reply
-    @review = CodeReview.find(params[:id].to_i)
+    @review = find_code_review
     @issue = @review.issue
     @issue.lock_version = params[:issue][:lock_version]
     comment = params[:reply][:comment]
@@ -129,7 +129,7 @@ class CodeReviewsController < ApplicationController
   end
 
   def update
-    @review = CodeReview.find(params[:id].to_i)
+    @review = find_code_review
     @review.issue.init_journal(User.current, nil)
     @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
     @issue = @review.issue
@@ -151,9 +151,8 @@ class CodeReviewsController < ApplicationController
     @error = l(:notice_locking_conflict)
   end
 
-
   def destroy
-    @review = CodeReview.where(project: @project).find params[:id]
+    @review = find_code_review
     @review.issue.destroy # review is destroyed through dependend: destroy
   end
 
@@ -175,6 +174,10 @@ class CodeReviewsController < ApplicationController
 
 
   private
+
+  def find_code_review
+    CodeReview.where(project: @project).find params[:id]
+  end
 
 
   def get_parent_candidate(revision)
