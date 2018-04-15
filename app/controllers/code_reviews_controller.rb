@@ -88,38 +88,10 @@ class CodeReviewsController < ApplicationController
 
   def create
     new_or_create
-
-    CodeReview.transaction do
-
-      @review.issue.save!
-      if @review.changeset
-        @review.changeset.issues.each {|issue|
-          create_relation @review, issue, settings.issue_relation_type
-        } if settings.auto_relation?
-      elsif @review.attachment and @review.attachment.container_type == 'Issue'
-        issue = Issue.find_by_id(@review.attachment.container_id)
-        create_relation @review, issue, settings.issue_relation_type if settings.auto_relation?
-      end
-      watched_users = []
-      @review.open_assignment_issues(User.current.id).each {|issue|
-        unless @review.issue.parent_id == issue.id
-          create_relation @review, issue, IssueRelation::TYPE_RELATES
-        end
-        unless watched_users.include?(issue.author)
-          watcher = Watcher.new
-          watcher.watchable_id = @review.issue.id
-          watcher.watchable_type = 'Issue'
-          watcher.user = issue.author
-          watcher.save!
-          watched_users.push(watcher.user)
-        end
-      }
-      @review.save!
-
+    r = RedmineCodeReview::CreateCodeReview.(@project, @review)
+    unless r.review_created?
+      logger.error r.error
     end
-
-  rescue ActiveRecord::RecordInvalid => e
-    logger.error e
   end
 
 
@@ -212,16 +184,6 @@ class CodeReviewsController < ApplicationController
     }
     nil
   end
-
-  def create_relation(review, issue, type)
-    return unless issue.project == @project
-    relation = IssueRelation.new
-    relation.relation_type = type
-    relation.issue_from_id = review.issue.id
-    relation.issue_to_id = issue.id
-    relation.save
-  end
-
 
   # initializes data used for new and create
   # TODO make that nicer
