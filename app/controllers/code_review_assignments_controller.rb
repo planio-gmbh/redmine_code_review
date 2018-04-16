@@ -22,7 +22,7 @@ class CodeReviewAssignmentsController < ApplicationController
       issue[:subject] << " [#{attachment.filename}]"
     else
 
-      code[:action_type] = params[:action_type] unless params[:action_type].blank?
+      code[:action_type] = params[:action_type].presence
       code[:repository_id] = repository.id
 
       code[:rev] =       params[:rev]       unless params[:rev].blank?
@@ -31,6 +31,8 @@ class CodeReviewAssignmentsController < ApplicationController
       code[:change_id] = params[:change_id] unless params[:change_id].blank?
 
       changeset_id = params[:changeset_id].presence
+      # TODO we *should* always have params[:changeset_id], so the next two ifs
+      # are not needed
       if changeset_id.nil? and code[:change_id]
         changeset_id = Change.find(code[:change_id]).changeset_id
       end
@@ -42,10 +44,15 @@ class CodeReviewAssignmentsController < ApplicationController
         changeset_id = changeset.id
       end
 
-      if changeset_id
-        code[:changeset_id] = changeset_id
-        changeset ||= repository.changesets.find changeset_id
-        issue[:subject] << " [#{changeset.text_tag}: #{changeset.short_comments}]" if changeset
+      code[:changeset_id] = changeset_id
+      changeset ||= repository.changesets.find changeset_id
+
+      if code[:action_type] == 'entry'
+        issue[:subject] << " [#{code[:path]}@#{changeset.text_tag}]"
+      elsif code[:path] and code[:path] != '.'
+        issue[:subject] << " [#{code[:path]}@#{changeset.text_tag}: #{changeset.short_comments}]"
+      else
+        issue[:subject] << " [#{changeset.text_tag}: #{changeset.short_comments}]"
       end
 
     end
@@ -58,14 +65,7 @@ class CodeReviewAssignmentsController < ApplicationController
     # basic sanity check since assignments do not have a project id
     @project.issues.visible.find assignment.issue_id
 
-    # FIXME why do we check for path here? does that mean the same as
-    # attachment.blank?
-    if assignment.path
-      redirect_to_review(assignment)
-    else
-      # TODO is there a use case for this?
-      redirect_to issue_path(assignment.issue)
-    end
+    redirect_to_review assignment
   end
 
 
