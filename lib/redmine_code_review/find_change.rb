@@ -10,7 +10,7 @@ module RedmineCodeReview
                 .where(changesets: { repository_id: repository.id })
                 .find(params[:change_id])
         end
-      elsif changeset and path.present?
+      elsif changeset and path.present? and path != '.'
 
         url = repository.url
         root_url = repository.root_url
