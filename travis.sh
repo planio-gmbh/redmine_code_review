@@ -24,6 +24,7 @@ then
 fi
 
 export RAILS_ENV=test
+export RUBYOPT="-W0"
 
 export REDMINE_GIT_REPO=git://github.com/redmine/redmine.git
 export REDMINE_GIT_TAG=$REDMINE_VER
@@ -43,7 +44,7 @@ then
   git checkout -b $REDMINE_GIT_TAG origin/$REDMINE_GIT_TAG
 fi
 
-# create a link to the backlogs plugin
+# create a link to the plugin
 ln -sf $PATH_TO_PLUGIN plugins/$NAME_OF_PLUGIN
 
 
