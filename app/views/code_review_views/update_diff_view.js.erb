@@ -7,8 +7,7 @@ window.path = '<%= j @path -%>';
 <% if @attachment %>
   var addReviewUrl = '<%= j new_code_review_url @project, action_type: 'attachment', attachment_id: @attachment.id %>';
 <% else %>
-  // TODO rev und repo koennen im prinzip raus wegen changeset
-  var addReviewUrl = '<%= j new_code_review_url @project, action_type: @action_type, change_id: @change.try(:id), rev: @rev, rev_to: @rev_to, repository_id: @repository.id, changeset_id: @changeset.id, path: @path %>';
+  var addReviewUrl = '<%= j new_code_review_url @project, action_type: @action_type, change_id: @change.try(:id), rev: @rev, rev_to: @rev_to, repository_id: @repository.id, changeset_id: @changeset.id %>';
 <% end %>
 
 setAddReviewButton(addReviewUrl, '<%= j image_tag('edit.png', :alt => l(:label_add_review), :title => l(:label_add_review)) %>', is_readonly, is_diff);

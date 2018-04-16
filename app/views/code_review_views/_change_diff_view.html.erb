@@ -10,9 +10,11 @@
           {
             repository_id:'<%= j @repository.id.to_s %>',
             changeset_id: '<%= j changeset.id.to_s %>',
+            change_id:    '<%= j @change.try(:id).to_s %>',
             action_type:  '<%= j params[:action] %>',
             review_id:    '<%= j params[:review_id] %>',
             path:         '<%= j path %>',
+            rev:          '<%= j params[:rev] %>',
             rev_to:       '<%= j params[:rev_to] %>'
           }
     );

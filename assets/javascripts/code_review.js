@@ -169,9 +169,11 @@ function clickPencil(e)
     var fileIdx = img.data('fileIdx');
     var data = { line: img.data('line'), file_count: fileIdx };
 
-    if (window.path == null || window.path.length == 0) {
+    if (window.path == null || window.path.length == 0 || window.path == '.') {
       data.path = encodeURIComponent(window.filenames[fileIdx]);
       data.diff_all = true;
+    } else {
+      data.path = window.path;
     }
     $.get(window.addReviewUrl, data);
     e.preventDefault();

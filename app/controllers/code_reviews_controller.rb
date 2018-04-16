@@ -17,6 +17,7 @@
 
 class CodeReviewsController < ApplicationController
   include RedmineCodeReview::RedirectToReview
+  include RedmineCodeReview::FindChange
   include RedmineCodeReview::FindRepository
   include RedmineCodeReview::FindSettings
 
@@ -52,19 +53,18 @@ class CodeReviewsController < ApplicationController
     render layout: !request.xhr?
   end
 
-
   def new
-    new_or_create
+    @change = find_change changeset, params[:path].presence
 
-    if params[:change_id].present?
-      @review.change = Change.find(params[:change_id])
-    end
+    new_or_create
+    @review.change = @change if @change
+
     if params[:line].present?
       @review.line = params[:line].to_i
     end
 
-    if (@review.changeset and @review.changeset.user_id)
-      @review.issue.assigned_to_id = @review.changeset.user_id
+    if (changeset and changeset.user_id)
+      @review.issue.assigned_to_id = changeset.user_id
     end
 
     @default_version_id = @review.issue.fixed_version.id if @review.issue.fixed_version
@@ -180,12 +180,22 @@ class CodeReviewsController < ApplicationController
   end
 
 
-  def get_parent_candidate(revision)
-    changeset = repository.find_changeset_by_name(revision)
-    changeset.issues.each {|issue|
-      return Issue.find(issue.parent_issue_id) if issue.parent_issue_id
-    }
-    nil
+  def changeset
+    @changeset ||= if @change
+      @change.changeset
+    elsif params[:changeset_id]
+      repository.changesets.find params[:changeset_id]
+    elsif rev = params[:rev].presence
+      repository.find_changeset_by_name(rev)
+    end
+
+  end
+
+
+  def get_parent_candidate
+    changeset.issues.detect{|issue|
+      issue.parent_issue.present?
+    }.try :parent_issue if changeset
   end
 
   # initializes data used for new and create
@@ -208,15 +218,17 @@ class CodeReviewsController < ApplicationController
     @review.updated_by_id = User.current.id
     @review.issue.start_date ||= Date.today if Setting.default_issue_start_date_to_creation_date?
     @review.action_type = params[:action_type]
-    @review.rev = params[:rev] unless params[:rev].blank?
-    @review.rev_to = params[:rev_to] unless params[:rev_to].blank?
-    @review.file_path = params[:path] unless params[:path].blank?
-    @review.file_count = params[:file_count].to_i unless params[:file_count].blank?
-    @review.attachment_id = params[:attachment_id].to_i unless params[:attachment_id].blank?
+    @review.rev = params[:rev].presence
+    @review.rev ||= @change.revision if @change
+    @review.rev_to = params[:rev_to].presence
+    @review.file_path = params[:path].presence
+    @review.file_count = params[:file_count].to_i if params[:file_count].present?
+    @review.attachment_id = params[:attachment_id].presence
     @issue = @review.issue
-    @review.issue.safe_attributes = params[:issue] unless params[:issue].blank?
+    @review.issue.safe_attributes = params[:issue] if params[:issue]
     @review.diff_all = (params[:diff_all] == 'true')
 
-    @parent_candidate = get_parent_candidate(@review.rev) if  @review.rev
+    @parent_candidate = get_parent_candidate
   end
+
 end

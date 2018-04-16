@@ -1,5 +1,6 @@
 class CodeReviewViewsController < ApplicationController
   include RedmineCodeReview::FindRepository
+  include RedmineCodeReview::FindChange
 
   before_filter :find_project_by_project_id, :authorize
 
@@ -15,58 +16,27 @@ class CodeReviewViewsController < ApplicationController
     find_review_if_present
 
     @repository = repository
-    @review = CodeReview.new
 
     @rev_to = params[:rev_to].presence
     @path   = params[:path].presence
-
-    @paths = []
-    @paths << @path if @path
-
     @action_type = params[:action_type]
 
     if id = params[:changeset_id].presence
       @changeset = repository.changesets.find id
       @rev = @changeset.revision
     else
-      # TODO remove, should be unused except maybe in tests
       @rev    = params[:rev].presence
       @changeset = repository.find_changeset_by_name(@rev)
     end
 
-    # FIXME was the empty loop good for anything?
-    #if @paths.empty?
-    #  changeset.filechanges.each{|chg|
-    #  }
-    #end
+    @reviews = CodeReview.where(project: @project, rev: @rev).joins(:issue)
 
-    url = repository.url
-    root_url = repository.root_url
-    if url.nil? or root_url.nil?
-      fullpath = @path
-    else
-      rootpath = url[root_url.length, url.length - root_url.length]
-      if rootpath.blank?
-        fullpath = @path
-      else
-        fullpath = (rootpath + '/' + @path).gsub(/[\/]+/, '/')
-      end
-    end
+    diff_all = @path.blank? || @path == '.'
 
-    @change = nil
-    @reviews = CodeReview.where(project: @project, rev: @rev)
-
-    if @path
-      @change = @changeset.filechanges.detect { |chg|
-        chg.path == fullpath or
-         "/#{chg.path}" == fullpath or
-         chg.path == "/#{@path}"
-      }
+    unless diff_all
       @reviews = @reviews.where file_path: @path
+      @change = find_change @changeset, @path
     end
-
-    # FIXME why here? That should have been set at creation time
-    @review.change_id = @change.id if @change
   end
 
 
