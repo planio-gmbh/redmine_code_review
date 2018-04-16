@@ -16,19 +16,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-require 'simplecov'
-require 'simplecov-rcov'
-require 'coveralls'
+#require 'simplecov'
+#require 'simplecov-rcov'
+#require 'coveralls'
 
-SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-  SimpleCov::Formatter::RcovFormatter,
-  Coveralls::SimpleCov::Formatter
-]
+#SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+#  SimpleCov::Formatter::RcovFormatter,
+#  Coveralls::SimpleCov::Formatter
+#]
 
-SimpleCov.start do
-  root File.expand_path(File.dirname(__FILE__) + '/..')
-  add_filter "/test/"
-end
+#SimpleCov.start do
+#  root File.expand_path(File.dirname(__FILE__) + '/..')
+#  add_filter "/test/"
+#end
 
 require_relative '../../../test/test_helper'
 
