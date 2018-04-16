@@ -1,4 +1,4 @@
-require_relative '../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
 class CodeReviewsQueryTest < ActiveSupport::TestCase
   fixtures :projects, :code_reviews, :issues, :issue_statuses, :changes, :changesets

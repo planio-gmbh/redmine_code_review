@@ -30,7 +30,7 @@
 #  add_filter "/test/"
 #end
 
-require_relative '../../../test/test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
 
 # Ensure that we are using the temporary fixture path
 #ngines::Testing.set_fixture_path

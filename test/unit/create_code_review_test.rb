@@ -1,4 +1,4 @@
-require_relative '../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
 class CreateCodeReviewTest < ActiveSupport::TestCase
   fixtures :projects,
