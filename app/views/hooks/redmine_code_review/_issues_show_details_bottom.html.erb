@@ -3,7 +3,11 @@
     <td><b><%= l(:code_review) %>:</b></td>
     <td colspan="3">
       <%
-      label = URI.decode("#{review.repository_identifier + ':' if review.repository_identifier}#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}")
+          label = if review.attachment
+                    "#{review.attachment.filename}:line #{review.line}"
+                  else
+                    URI.decode("#{review.repository_identifier + ':' if review.repository_identifier}#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}")
+                  end
       -%>
     <%= link_to label, code_review_path(review.project, review, repository_id: review.repository_identifier) %>
     </td>
@@ -15,7 +19,7 @@
   <tr>
     <td><b><%= l(:review_assigned_for) %>:</b></td>
     <td colspan="3">
-      <% if assignment.path %>
+      <% if assignment.path && assignment.path != '.' %>
         <%
         label = URI.decode("#{repository_id + ':' if repository_id}#{assignment.path}#{'@' + assignment.revision if assignment.revision}")
         -%>
