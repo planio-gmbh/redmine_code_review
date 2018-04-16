@@ -3,18 +3,21 @@
 module RedmineCodeReview
   module RedirectToReview
 
+    # Redirects to attachment view or one of the repository views
+    # target may either be a CodeReview or CodeReviewAssignment
     def redirect_to_review(target)
       parameters = {}
+
+      # directly pop up the review
       parameters[:review_id] = target.id if target.is_a?(CodeReview)
 
       if attachment = target.attachment
-        parameters[:filename] = attachment.filename
         redirect_to attachment_path attachment, parameters
 
       else
         parameters.update(
           controller: 'repositories', action: target.action_type,
-          id: @project, repository_id: @repository_id,
+          id: @project, repository_id: repository.identifier_param,
           rev: target.revision,
         )
         # TODO do we want that?
