@@ -19,9 +19,8 @@
 <% if @changeset %>
 
 <%
-  repository_id = @repository.identifier_param
   urlprefix = url_for(controller: 'repositories', action: 'revisions',
-                      id: project, repository_id: repository_id) +
+                      id: project, repository_id: @repository.identifier_param) +
                       '/' + @changeset.identifier + '/entry'
 %>
 
@@ -29,7 +28,7 @@
     <div id="code_review_assignments">
       <%= l :review_assignments %>:
       <%= show_assignments @changeset.code_review_assignments, @project,
-      { changeset_id: @changeset.id, action_type: params[:action] } %>
+      { changeset_id: @changeset.id, action_type: params[:action], repository_id: @changeset.repository_id } %>
     </div>
   <% end %>
 
@@ -46,7 +45,7 @@
           issue = review.issue
           url = link_to "##{issue.id} #{review.subject}(#{issue.status})",
                         code_review_url(project, review,
-                                        repository_id: repository_id)
+                                        repository_id: @repository.id)
         %>
 
         var review = new CodeReview('<%= j review.id %>');
