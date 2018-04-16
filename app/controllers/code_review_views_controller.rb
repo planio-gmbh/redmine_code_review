@@ -56,7 +56,7 @@ class CodeReviewViewsController < ApplicationController
 
   def find_review_if_present
     if id = params[:review_id].presence
-      @show_review = CodeReview.where(project: @project).find id
+      @show_review = CodeReview.where(project: @project).find_by_id id
     end
   end
 end
