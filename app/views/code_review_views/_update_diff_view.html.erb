@@ -29,6 +29,8 @@
   <%
    assignments = if @change
      @change.code_review_assignments
+   elsif @changeset
+     @changeset.code_review_assignments
    elsif @attachment
      @attachment.code_review_assignments
    end
@@ -36,7 +38,7 @@
 
   <% if User.current.allowed_to?(:assign_code_review, @project) %>
     <%= l :review_assignments %>:
-    <%= show_assignments assignments, @project, {:action_type => @action_type, :rev => @rev, :rev_to => @rev_to, :path => @path, :change_id => @change.try(:id), :attachment_id => @attachment.try(:id), changeset_id: @changeset.try(:id)} %>
+    <%= show_assignments assignments, @project, {action_type: @action_type, rev: @rev, rev_to: @rev_to, path: @path, change_id: @change.try(:id), attachment_id: @attachment.try(:id), changeset_id: @changeset.try(:id), repository_id: @repository.try(:id)} %>
   <% end %>
 </div>
 
