@@ -78,6 +78,15 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
     assert_template '_new_form'
   end
 
+  test 'create review should store path' do
+    xhr :post, :create, project_id: 'ecookbook', :review => {
+      line: 1, subject: 'bbb'
+    }, action_type: 'diff', path: 'foo/bar.txt'
+
+    assert r = CodeReview.last
+    assert_equal 'foo/bar.txt', r.file_path
+  end
+
   test "should create new review when changeset has related issue" do
     change = Change.find(3)
     changeset = change.changeset
