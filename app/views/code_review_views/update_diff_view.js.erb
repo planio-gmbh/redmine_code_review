@@ -21,7 +21,7 @@ window.showClosedReviewImageTag = '<%= j image_tag('closed_review.png', :plugin 
   end
 %>
 <% for review in @reviews do %>
-  setShowReviewButton('<%= j code_review_url(@project, review) %>', <%= review.line %>, '<%= j review.id.to_s %>', <%= review.is_closed? %>, <%= @file_indizes ? @file_indizes[review.file_path] : review.file_count %> );
+  setShowReviewButton('<%= j code_review_url(@project, review) %>', <%= review.line %>, '<%= j review.id.to_s %>', <%= review.is_closed? %>, <%= @file_indizes ? @file_indizes[review.file_path] : 0 %> );
 <% end %>
 
 <% if @show_review -%>

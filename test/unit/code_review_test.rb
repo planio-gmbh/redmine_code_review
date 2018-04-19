@@ -37,8 +37,10 @@ class CodeReviewTest < ActiveSupport::TestCase
     code_review.line = 20
 
     assert code_review.save
-    
-    code_review.destroy
+
+    code_review.reload
+    # should have been auto-initialized
+    assert_equal Change.find(1).changeset_id, code_review.changeset_id
   end
 
   test 'should find changeset without change_id' do
@@ -47,6 +49,13 @@ class CodeReviewTest < ActiveSupport::TestCase
     assert cs = r.changeset
     assert_equal '5', cs.revision
     assert_equal 1, cs.repository.project_id
+  end
+
+  test 'should find changeset by changeset_id' do
+    r = CodeReview.find 9
+    r.update_columns file_path: nil, change_id: nil, attachment_id: nil, rev: 'safdadsf5', project_id: 1, changeset_id: 104
+    assert cs = r.changeset
+    assert_equal 104, cs.id
   end
 
   test 'should find repository by changeset' do

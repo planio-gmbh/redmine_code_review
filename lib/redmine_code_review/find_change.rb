@@ -12,6 +12,7 @@ module RedmineCodeReview
         end
       elsif changeset and path.present? and path != '.'
 
+        repository = changeset.repository
         url = repository.url
         root_url = repository.root_url
         if url.nil? or root_url.nil?

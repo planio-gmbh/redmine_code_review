@@ -32,6 +32,7 @@
     <%= error_messages_for 'relation' %>
     <%= f.hidden_field(:change_id) %>
     <%= f.hidden_field(:line) %>
+    <%= f.hidden_field(:changeset_id) %>
     <%= hidden_field_tag(:action_type, @review.action_type) %>
     <%= hidden_field_tag(:rev, @review.revision) %>
     <%= hidden_field_tag(:rev_to, @review.rev_to) %>

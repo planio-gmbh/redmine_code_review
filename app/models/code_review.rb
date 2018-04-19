@@ -27,8 +27,10 @@ class CodeReview < ActiveRecord::Base
 
   attr_accessible :change_id, :subject, :line, :parent_id, :comment, :status_id, :issue
 
-  def before_create
-    issue = Issue.new unless issue
+  before_create :set_changeset_id_from_change
+
+  def set_changeset_id_from_change
+    self.changeset_id ||= change.try :changeset_id
   end
 
   def is_closed?
@@ -82,6 +84,8 @@ class CodeReview < ActiveRecord::Base
     @changeset ||= begin
                      if change
                        change.changeset
+                     elsif changeset_id
+                       Changeset.find(changeset_id)
                      elsif project and rev.present?
                        changeset = nil
                        project.repositories.detect do |r|

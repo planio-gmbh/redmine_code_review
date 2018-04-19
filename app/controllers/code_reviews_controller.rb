@@ -54,18 +54,34 @@ class CodeReviewsController < ApplicationController
   end
 
   def new
-    @change = find_change changeset, params[:path].presence
+    if params[:repository_id].present?
+      @repository = @project.repositories.find params[:repository_id]
+    end
+
+    if changeset_id = params[:changeset_id].presence
+      @changeset = if @repository
+        @repository.changesets.find changeset_id
+      else
+        Changeset.where(repository_id: @project.repository_ids).find changeset_id
+      end
+      @repository ||= @changeset.repository
+
+      if @changeset.user_id
+        @review.issue.assigned_to_id = changeset.user_id
+      end
+    end
+
+    @change = find_change @changeset, params[:path].presence
 
     new_or_create
     @review.change = @change if @change
+    @review.changeset_id = @changeset.id if @changeset
 
     if params[:line].present?
       @review.line = params[:line].to_i
     end
 
-    if (changeset and changeset.user_id)
-      @review.issue.assigned_to_id = changeset.user_id
-    end
+
 
     @default_version_id = @review.issue.fixed_version.id if @review.issue.fixed_version
 
