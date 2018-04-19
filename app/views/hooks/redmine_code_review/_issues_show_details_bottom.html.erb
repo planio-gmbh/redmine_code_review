@@ -9,7 +9,7 @@
                     URI.decode("#{review.repository_identifier + ':' if review.repository_identifier}#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}")
                   end
       -%>
-    <%= link_to label, code_review_path(review.project, review, repository_id: review.repository_identifier) %>
+    <%= link_to label, code_review_path(review.project, review) %>
     </td>
   </tr>
 <% end %>
@@ -23,7 +23,7 @@
         <%
         label = URI.decode("#{repository_id + ':' if repository_id}#{assignment.path}#{'@' + assignment.revision if assignment.revision}")
         -%>
-        <%= link_to label, code_review_assignment_path(assignment.project, assignment, repository_id: repository_id) %>
+        <%= link_to label, code_review_assignment_path(assignment.project, assignment) %>
       <% elsif assignment.revision %>
         <%
         repo = assignment.repository || (assignment.project || project).repository
