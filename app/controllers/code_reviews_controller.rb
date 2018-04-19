@@ -65,17 +65,19 @@ class CodeReviewsController < ApplicationController
         Changeset.where(repository_id: @project.repository_ids).find changeset_id
       end
       @repository ||= @changeset.repository
-
-      if @changeset.user_id
-        @review.issue.assigned_to_id = changeset.user_id
-      end
     end
 
     @change = find_change @changeset, params[:path].presence
 
     new_or_create
     @review.change = @change if @change
-    @review.changeset_id = @changeset.id if @changeset
+
+    if @changeset
+      @review.changeset_id = @changeset.id 
+      if @changeset.user_id
+        @review.issue.assigned_to_id = @changeset.user_id
+      end
+    end
 
     if params[:line].present?
       @review.line = params[:line].to_i
