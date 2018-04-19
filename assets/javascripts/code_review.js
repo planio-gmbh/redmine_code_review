@@ -26,7 +26,6 @@ var urlprefix = '';
 var review_form_dialog = null;
 var filenames = [];
 
-var addReviewUrl = null;
 var showReviewImageTag = null;
 var showClosedReviewImageTag = null;
 
@@ -120,6 +119,7 @@ function setAddReviewButton(addReviewUrl, image_tag, is_readonly, is_diff){
     if (is_diff) {
         num = 1;
     }
+    var handler = function(e){ clickPencil(e, addReviewUrl); };
     var i, l, tl;
     for (i = 0, tl = filetables.length; i < tl; i++) {
         var table = filetables[i];
@@ -155,7 +155,7 @@ function setAddReviewButton(addReviewUrl, image_tag, is_readonly, is_diff){
               img = $(img);
               img.data('line', line);
               img.data('fileIdx', i);
-              img.click(clickPencil);
+              img.click(handler);
             }
         }
     }
@@ -163,19 +163,19 @@ function setAddReviewButton(addReviewUrl, image_tag, is_readonly, is_diff){
 
 }
 
-function clickPencil(e)
+function clickPencil(e, url)
 {
     var img = $(e.target);
     var fileIdx = img.data('fileIdx');
     var data = { line: img.data('line'), file_count: fileIdx };
 
     if (window.path == null || window.path.length == 0 || window.path == '.') {
-      data.path = encodeURIComponent(window.filenames[fileIdx]);
+      data.path = window.filenames[fileIdx];
       data.diff_all = true;
     } else {
       data.path = window.path;
     }
-    $.get(window.addReviewUrl, data);
+    $.get(url, data);
     e.preventDefault();
 }
 
@@ -273,7 +273,7 @@ function call_update_revisions(url) {
     {
         evalScripts:true,
         method:'get',
-        parameters: 'changeset_ids=' + encodeURI(changeset_ids)
+        parameters: 'changeset_ids=' + encodeURIComponent(changeset_ids)
     });
 }
 
