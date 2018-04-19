@@ -1,3 +1,5 @@
+require 'uri'
+
 module RedmineCodeReview
 
   # Reviews created on the 'single file diff' view always get a file index
@@ -26,6 +28,7 @@ module RedmineCodeReview
     end
 
     def [](path)
+      path = URI.decode(path) if path[?%]
       @file_indizes[path]
     end
 
