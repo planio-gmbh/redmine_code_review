@@ -137,9 +137,22 @@ class CodeReviewsControllerTest < Redmine::ControllerTest
   end
 
 
-  test "show should redirect" do
+  test "show should redirect to attachment" do
+    rev = CodeReview.find 9
+    rev.update_columns attachment_id: 1, rev: nil, change_id: nil
     get :show, project_id: 'ecookbook', id: 9
-    assert_response 302
+    assert_redirected_to '/attachments/1?review_id=9'
+  end
+
+  test "show should redirect to proper project repository" do
+    rev = CodeReview.find 9
+    rev.update_columns change_id: nil, rev: 5, diff_all: true
+    get :show, project_id: 'ecookbook', id: 9
+    assert_redirected_to '/projects/ecookbook/repository/revisions/5/diff?review_id=9'
+
+    rev.update_columns change_id: nil, rev: 5, diff_all: false, file_path: 'foo/bar.txt'
+    get :show, project_id: 'ecookbook', id: 9
+    assert_redirected_to '/projects/ecookbook/repository/revisions/5/diff/foo/bar.txt?review_id=9'
   end
 
 

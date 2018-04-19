@@ -41,6 +41,20 @@ class CodeReviewTest < ActiveSupport::TestCase
     code_review.destroy
   end
 
+  test 'should find changeset without change_id' do
+    r = CodeReview.find 9
+    r.update_columns file_path: nil, change_id: nil, attachment_id: nil, rev: '5', project_id: 1
+    assert cs = r.changeset
+    assert_equal '5', cs.revision
+    assert_equal 1, cs.repository.project_id
+  end
+
+  test 'should find repository by changeset' do
+    r = CodeReview.find 9
+    r.update_columns file_path: nil, change_id: nil, attachment_id: nil, rev: '5', project_id: 1
+    assert_equal 10, r.repository.id
+  end
+
   def test_close
     code_review = newreview
     assert !code_review.is_closed?

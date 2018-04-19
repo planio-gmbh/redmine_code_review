@@ -5,7 +5,7 @@ module RedmineCodeReview
 
     # Redirects to attachment view or one of the repository views
     # target may either be a CodeReview or CodeReviewAssignment
-    def redirect_to_review(target)
+    def redirect_to_review(target, repository)
       parameters = {}
 
       # directly pop up the review

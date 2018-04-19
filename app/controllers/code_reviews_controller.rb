@@ -104,7 +104,7 @@ class CodeReviewsController < ApplicationController
     @repository_id = @review.repository_identifier
 
     if !request.xhr? and params[:update].blank? and @review.path.present?
-      redirect_to_review @review
+      redirect_to_review @review, @repository
     end
   end
 

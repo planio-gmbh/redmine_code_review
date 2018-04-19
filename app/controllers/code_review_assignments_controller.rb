@@ -65,7 +65,7 @@ class CodeReviewAssignmentsController < ApplicationController
     # basic sanity check since assignments do not have a project id
     @project.issues.visible.find assignment.issue_id
 
-    redirect_to_review assignment
+    redirect_to_review assignment, repository
   end
 
 
