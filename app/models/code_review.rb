@@ -147,11 +147,11 @@ class CodeReview < ActiveRecord::Base
   end
 
   def parent_id= (p)
-    issue.parent_issue_id = p
+    issue.parent_id = p
   end
 
   def parent_id
-    issue.parent_issue_id
+    issue.parent_id
   end
 
   def status_id=(s)

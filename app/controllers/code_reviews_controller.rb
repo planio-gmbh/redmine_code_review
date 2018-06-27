@@ -212,8 +212,8 @@ class CodeReviewsController < ApplicationController
 
   def get_parent_candidate
     changeset.issues.detect{|issue|
-      issue.parent_issue.present?
-    }.try :parent_issue if changeset
+      issue.parent.present?
+    }.try :parent if changeset
   end
 
   # initializes data used for new and create
