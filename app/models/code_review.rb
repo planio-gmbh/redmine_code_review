@@ -81,19 +81,18 @@ class CodeReview < ActiveRecord::Base
   end
 
   def changeset
-    @changeset ||= begin
-                     if change
-                       change.changeset
-                     elsif changeset_id
-                       Changeset.find(changeset_id)
-                     elsif project and rev.present?
-                       changeset = nil
-                       project.repositories.detect do |r|
-                         changeset = r.find_changeset_by_name(rev)
-                       end
-                       changeset
-                     end
-                   end
+    return @changeset if @changeset
+
+    @changeset = change.changeset if change
+    @changeset ||= Changeset.find_by_id(changeset_id) if changeset_id
+
+    if @changeset.nil? && project && rev.present?
+      project.repositories.detect do |r|
+        @changeset = r.find_changeset_by_name(rev)
+      end
+    end
+
+    @changeset
   end
 
   def repository
