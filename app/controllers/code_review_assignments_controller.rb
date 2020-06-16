@@ -64,8 +64,9 @@ class CodeReviewAssignmentsController < ApplicationController
     assignment = CodeReviewAssignment.find params[:id]
     # basic sanity check since assignments do not have a project id
     @project.issues.visible.find assignment.issue_id
+    repo = assignment.changeset.repository
 
-    redirect_to_review assignment, repository
+    redirect_to_review assignment, repo
   end
 
 
