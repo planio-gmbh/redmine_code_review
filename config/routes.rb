@@ -35,7 +35,8 @@ RedmineApp::Application.routes.draw do
       to: 'code_review_views#update_diff_view',
       as: :update_diff_view_code_review
 
-    get 'code_review_views/update_revisions',
+    # $('foof').load uses POST when some data arg is present
+    post 'code_review_views/update_revisions',
       to: 'code_review_views#update_revisions_view',
       as: :update_revisions_view_code_review
 
